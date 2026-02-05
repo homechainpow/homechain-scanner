@@ -40,11 +40,5 @@
             "source": "/api/:match*",
             "destination": "http://13.220.55.223/api/:match*"
         }
-    ],
-    "builds": [
-        {
-            "src": "index.html",
-            "use": "@vercel/static"
-        }
     ]
 }
