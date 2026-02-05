@@ -1,0 +1,50 @@
+{
+    "rewrites": [
+        {
+            "source": "/blocks",
+            "destination": "/index.html"
+        },
+        {
+            "source": "/transaction",
+            "destination": "/index.html"
+        },
+        {
+            "source": "/validator",
+            "destination": "/index.html"
+        },
+        {
+            "source": "/holder",
+            "destination": "/index.html"
+        },
+        {
+            "source": "/analytics",
+            "destination": "/index.html"
+        },
+        {
+            "source": "/search",
+            "destination": "/index.html"
+        },
+        {
+            "source": "/address/(.*)",
+            "destination": "/index.html"
+        },
+        {
+            "source": "/block/(.*)",
+            "destination": "/index.html"
+        },
+        {
+            "source": "/tx/(.*)",
+            "destination": "/index.html"
+        },
+        {
+            "source": "/api/:match*",
+            "destination": "http://13.220.55.223/api/:match*"
+        }
+    ],
+    "builds": [
+        {
+            "src": "index.html",
+            "use": "@vercel/static"
+        }
+    ]
+}
