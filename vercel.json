@@ -1,5 +1,19 @@
 {
+    "builds": [
+        {
+            "src": "index.html",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "logo_final.png",
+            "use": "@vercel/static"
+        }
+    ],
     "rewrites": [
+        {
+            "source": "/api/:match*",
+            "destination": "http://13.220.55.223/api/:match*"
+        },
         {
             "source": "/blocks",
             "destination": "/index.html"
@@ -35,10 +49,6 @@
         {
             "source": "/tx/(.*)",
             "destination": "/index.html"
-        },
-        {
-            "source": "/api/:match*",
-            "destination": "http://13.220.55.223/api/:match*"
         }
     ]
 }
