@@ -1,49 +1,15 @@
 {
     "version": 2,
     "public": true,
+    "framework": null,
+    "outputDirectory": ".",
     "rewrites": [
         {
             "source": "/api/:match*",
             "destination": "http://13.220.55.223/api/:match*"
         },
         {
-            "source": "/blocks",
-            "destination": "/index.html"
-        },
-        {
-            "source": "/transaction",
-            "destination": "/index.html"
-        },
-        {
-            "source": "/rewards",
-            "destination": "/index.html"
-        },
-        {
-            "source": "/validator",
-            "destination": "/index.html"
-        },
-        {
-            "source": "/holder",
-            "destination": "/index.html"
-        },
-        {
-            "source": "/analytics",
-            "destination": "/index.html"
-        },
-        {
-            "source": "/search",
-            "destination": "/index.html"
-        },
-        {
-            "source": "/address/(.*)",
-            "destination": "/index.html"
-        },
-        {
-            "source": "/block/(.*)",
-            "destination": "/index.html"
-        },
-        {
-            "source": "/tx/(.*)",
+            "source": "/(.*)",
             "destination": "/index.html"
         }
     ]
