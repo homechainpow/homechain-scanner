@@ -901,10 +901,15 @@
         }
 
         async function fetchValidators() {
-            const { data } = await sbClient.from('blocks').select('validator').order('id', { ascending: false });
+            const { data } = await sbClient.from('blocks').select('validator');
             const counts = {};
             data.forEach(x => counts[x.validator] = (counts[x.validator] || 0) + 1);
-            const list = Object.keys(counts).map(addr => ({ address: addr, blocks: counts[addr] })).sort((a, b) => b.blocks - a.blocks);
+            const fullList = Object.keys(counts).map(addr => ({ address: addr, blocks: counts[addr] })).sort((a, b) => b.blocks - a.blocks);
+
+            const totalCount = fullList.length;
+            const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const list = fullList.slice(start, start + PAGE_SIZE);
 
             const html = `<table><thead><tr>
                 <th class="mobile-show">Rank</th>
@@ -913,13 +918,14 @@
                 <th>Status</th>
             </tr></thead><tbody>` +
                 list.map((v, i) => `<tr>
-                    <td class="mobile-show">${i + 1}</td>
+                    <td class="mobile-show">${start + i + 1}</td>
                     <td class="mobile-show">${formatDisplay(v.address)}</td>
                     <td class="mobile-show">${v.blocks}</td>
                     <td><span class="badge" style="background:rgba(0,255,0,0.1); color:#00ff00">ACTIVE</span></td>
                 </tr>`).join('') + `</tbody></table>`;
 
             document.getElementById('validatorsList').innerHTML = html;
+            renderPagination('validatorsPagination', totalPages);
         }
 
         async function fetchBlockDetail(id) {
@@ -945,14 +951,52 @@
         async function fetchAddressDetail(addr) {
             const { data: h } = await sbClient.from('holders').select('balance').eq('address', addr).single();
             const bal = h ? h.balance : 0;
-            document.getElementById('addressDetailContent').innerHTML = `
+
+            // Fetch Transctions (Sent and Received)
+            const { data: txsSent } = await sbClient.from('transactions').select('*').eq('sender', addr).order('timestamp', { ascending: false }).limit(20);
+            const { data: txsRecv } = await sbClient.from('transactions').select('*').eq('receiver', addr).order('timestamp', { ascending: false }).limit(20);
+            const { data: rews } = await sbClient.from('rewards').select('*').eq('receiver', addr).order('timestamp', { ascending: false }).limit(20);
+
+            const combined = [
+                ...(txsSent || []).map(t => ({ ...t, type: 'Sent', partner: t.receiver, sign: -1 })),
+                ...(txsRecv || []).map(t => ({ ...t, type: 'Received', partner: t.sender, sign: 1 })),
+                ...(rews || []).map(r => ({ ...r, type: r.type || 'Reward', partner: 'SYSTEM', sign: 1, signature: r.id }))
+            ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 50);
+
+            let html = `
                 <div style="padding:20px">
-                    <h3>Balance: ${formatMoney(bal)}</h3>
-                    <div style="display:flex; align-items:center; gap:10px; margin-top:10px">
-                        <span>Address:</span> ${formatDisplay(addr)}
+                    <div class="card" style="margin-bottom:20px">
+                        <h3 style="color:var(--accent)">Balance: ${formatMoney(bal)}</h3>
+                        <p style="font-size:0.9em; opacity:0.8; margin-top:5px">${addr}</p>
+                    </div>
+
+                    <h4 style="margin-bottom:15px">Recent Transactions</h4>
+                    <div class="card" style="padding:0; overflow:hidden">
+                        <table style="width:100%; border-collapse:collapse">
+                            <thead>
+                                <tr style="background:rgba(255,255,255,0.05)">
+                                    <th style="padding:12px; text-align:left">Hash</th>
+                                    <th style="padding:12px; text-align:left">Age</th>
+                                    <th style="padding:12px; text-align:left">Type</th>
+                                    <th style="padding:12px; text-align:left">Partner</th>
+                                    <th style="padding:12px; text-align:right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>` +
+                combined.map(t => `
+                    <tr style="border-top:1px solid var(--border)">
+                        <td style="padding:12px">${formatDisplay(t.signature || t.id.toString(), 'tx')}</td>
+                        <td style="padding:12px">${timeAgo(new Date(t.timestamp).getTime() / 1000)}</td>
+                        <td style="padding:12px"><span class="badge" style="background:${t.type === 'Sent' ? 'rgba(255,0,0,0.1)' : 'rgba(0,255,0,0.1)'}; color:${t.type === 'Sent' ? '#ff4d4d' : '#00ff00'}">${t.type}</span></td>
+                        <td style="padding:12px">${formatDisplay(t.partner)}</td>
+                        <td style="padding:12px; text-align:right; color:${t.sign > 0 ? '#00ff00' : '#ff4d4d'}">${t.sign > 0 ? '+' : '-'}${formatMoney(t.amount)}</td>
+                    </tr>`).join('') + (combined.length === 0 ? '<tr><td colspan="5" style="padding:20px; text-align:center; opacity:0.5">No transactions found</td></tr>' : '') +
+                `</tbody></table>
                     </div>
                 </div>`;
-            document.getElementById('addressTitle').innerText = "Address Info";
+
+            document.getElementById('addressDetailContent').innerHTML = html;
+            document.getElementById('addressTitle').innerText = "Address Detailed View";
         }
 
         async function fetchTxDetail(id) {
