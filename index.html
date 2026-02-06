@@ -779,20 +779,34 @@
 
         async function fetchTxs() {
             const start = (currentPage - 1) * PAGE_SIZE;
-            const { data, count } = await sbClient.from('transactions').select('*', { count: 'exact' })
+
+            // Fetch both transactions and rewards
+            const { data: txs, count: txCount } = await sbClient.from('transactions').select('*', { count: 'exact' })
+                .order('id', { ascending: false }).range(start, start + PAGE_SIZE - 1);
+            const { data: rews, count: rewCount } = await sbClient.from('rewards').select('*', { count: 'exact' })
                 .order('id', { ascending: false }).range(start, start + PAGE_SIZE - 1);
 
-            const totalPages = Math.ceil(count / PAGE_SIZE);
+            // Combine and sort by timestamp
+            const combined = [
+                ...(txs || []).map(t => ({ ...t, type: 'Transfer', sender: t.sender, receiver: t.receiver })),
+                ...(rews || []).map(r => ({ ...r, type: r.type || 'Reward', sender: 'SYSTEM', receiver: r.receiver, signature: r.id }))
+            ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, PAGE_SIZE);
+
+            const totalCount = (txCount || 0) + (rewCount || 0);
+            const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
             const html = `<table><thead><tr>
                 <th class="mobile-show">Hash</th>
                 <th class="mobile-show">Age</th>
+                <th>Type</th>
                 <th>From</th>
                 <th>To</th>
                 <th>Value</th>
             </tr></thead><tbody>` +
-                data.map(t => `<tr>
+                combined.map(t => `<tr>
                     <td class="mobile-show">${formatDisplay(t.signature || t.id.toString(), 'tx')}</td>
                     <td class="mobile-show">${timeAgo(new Date(t.timestamp).getTime() / 1000)}</td>
+                    <td><span class="badge">${t.type}</span></td>
                     <td>${formatDisplay(t.sender)}</td>
                     <td>${formatDisplay(t.receiver)}</td>
                     <td>${formatMoney(t.amount)}</td>
