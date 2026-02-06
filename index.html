@@ -587,6 +587,7 @@
             router();
         };
 
+        let currentView = "";
         const router = () => {
             const path = location.hash.slice(1) || "/";
             let view = "home";
@@ -595,14 +596,19 @@
             else if (path === "/holder") view = "holders";
             else if (path === "/analytics") view = "analytics";
             else if (path === "/validator") view = "validators";
+            else if (path === "/rewards") view = "rewards";
             else if (path.startsWith("/block/")) view = "block";
             else if (path.startsWith("/address/")) view = "address";
             else if (path.startsWith("/tx/")) view = "tx";
 
             switchTab(view);
-            if (view !== "block" && view !== "address" && view !== "tx") {
+
+            // PAGINATION FIX: Only reset page if switching to a new main tab
+            if (view !== currentView && !["block", "address", "tx"].includes(view)) {
                 currentPage = 1;
             }
+            currentView = view;
+
             updateView(view, path);
         };
 
