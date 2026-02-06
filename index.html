@@ -724,25 +724,17 @@
 
         async function fetchLatestTxs() {
             try {
-                const { data: txs } = await sbClient.from('transactions').select('*').order('id', { ascending: false }).limit(4);
-                const { data: rews } = await sbClient.from('rewards').select('*').order('id', { ascending: false }).limit(4);
+                const { data: txs } = await sbClient.from('transactions').select('*').order('id', { ascending: false }).limit(8);
 
-                const txList = txs || [];
-                const rewList = rews || [];
-
-                const combined = [...txList.map(t => ({ ...t, type: 'TX' })), ...rewList.map(r => ({ ...r, type: 'REW', sender: 'SYSTEM' }))]
-                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                    .slice(0, 8);
-
-                if (combined.length === 0) {
+                if (!txs || txs.length === 0) {
                     document.getElementById('txListSummary').innerHTML = '<div class="card">No transactions found.</div>';
                     return;
                 }
 
-                const html = combined.map(t => `
+                const html = txs.map(t => `
                     <div class="table-row">
                         <div class="row-data">
-                            <span class="row-primary" onclick="navigateTo('/tx/${t.signature || t.id}')">${t.type}</span>
+                            <span class="row-primary" onclick="navigateTo('/tx/${t.signature || t.id}')">TRANSFER</span>
                             <span class="row-secondary">${timeAgo(new Date(t.timestamp).getTime() / 1000)}</span>
                         </div>
                         <div class="row-meta">
@@ -786,36 +778,28 @@
         async function fetchTxs() {
             const start = (currentPage - 1) * PAGE_SIZE;
 
-            // Fetch both transactions and rewards
-            const { data: txs, count: txCount } = await sbClient.from('transactions').select('*', { count: 'exact' })
-                .order('id', { ascending: false }).range(start, start + PAGE_SIZE - 1);
-            const { data: rews, count: rewCount } = await sbClient.from('rewards').select('*', { count: 'exact' })
+            const { data: txs, count } = await sbClient.from('transactions').select('*', { count: 'exact' })
                 .order('id', { ascending: false }).range(start, start + PAGE_SIZE - 1);
 
-            // Combine and sort by timestamp
-            const combined = [
-                ...(txs || []).map(t => ({ ...t, type: 'Transfer', sender: t.sender, receiver: t.receiver })),
-                ...(rews || []).map(r => ({ ...r, type: r.type || 'Reward', sender: 'SYSTEM', receiver: r.receiver, signature: r.id }))
-            ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, PAGE_SIZE);
+            if (!txs || txs.length === 0) {
+                document.getElementById('txListFull').innerHTML = '<div class="card">No transactions found.</div>';
+                return;
+            }
 
-            const totalCount = (txCount || 0) + (rewCount || 0);
-            const totalPages = Math.ceil(totalCount / PAGE_SIZE);
-
+            const totalPages = Math.ceil(count / PAGE_SIZE);
             const html = `<table><thead><tr>
-                <th class="mobile-show">Hash</th>
+                <th class="mobile-show">Signature</th>
                 <th class="mobile-show">Age</th>
-                <th>Type</th>
                 <th>From</th>
                 <th>To</th>
-                <th>Value</th>
+                <th>Amount</th>
             </tr></thead><tbody>` +
-                combined.map(t => `<tr>
+                txs.map(t => `<tr>
                     <td class="mobile-show">${formatDisplay(t.signature || t.id.toString(), 'tx')}</td>
                     <td class="mobile-show">${timeAgo(new Date(t.timestamp).getTime() / 1000)}</td>
-                    <td><span class="badge">${t.type}</span></td>
                     <td>${formatDisplay(t.sender)}</td>
                     <td>${formatDisplay(t.receiver)}</td>
-                    <td>${formatMoney(t.amount)}</td>
+                    <td><span class="badge">${formatMoney(t.amount)}</span></td>
                 </tr>`).join('') + `</tbody></table>`;
 
             document.getElementById('txListFull').innerHTML = html;
