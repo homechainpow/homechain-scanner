@@ -1,14 +1,6 @@
 {
-    "builds": [
-        {
-            "src": "index.html",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "logo_final.png",
-            "use": "@vercel/static"
-        }
-    ],
+    "version": 2,
+    "public": true,
     "rewrites": [
         {
             "source": "/api/:match*",
@@ -20,6 +12,10 @@
         },
         {
             "source": "/transaction",
+            "destination": "/index.html"
+        },
+        {
+            "source": "/rewards",
             "destination": "/index.html"
         },
         {

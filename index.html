@@ -55,9 +55,18 @@
 
         .search-bar {
             flex: 1;
-            max-width: 400px;
+            max-width: 450px;
             margin: 0 20px;
             position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-input-group {
+            width: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
         }
 
         .search-input {
@@ -65,14 +74,42 @@
             background: #252525;
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 10px 16px;
+            padding: 10px 40px 10px 16px;
             color: white;
             font-family: inherit;
+            transition: border-color 0.2s;
         }
 
         .search-input:focus {
             border-color: var(--accent);
             outline: none;
+        }
+
+        .search-btns {
+            position: absolute;
+            right: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-btn-icon {
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 16px;
+            transition: color 0.2s;
+            background: none;
+            border: none;
+            padding: 4px;
+        }
+
+        .search-btn-icon:hover {
+            color: var(--accent);
+        }
+
+        #clearSearch {
+            display: none;
+            font-weight: bold;
         }
 
         .nav-links {
@@ -95,7 +132,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 24px auto;
             padding: 0 24px;
         }
@@ -219,6 +256,7 @@
             font-size: 12px;
             color: var(--text-secondary);
             border-top: 1px solid var(--border);
+            z-index: 1000;
         }
 
         table {
@@ -277,7 +315,78 @@
             flex-direction: column;
         }
 
-        /* Keep for mobile/summary */
+        .copy-btn {
+            cursor: pointer;
+            margin-left: 6px;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+            font-size: 14px;
+            user-select: none;
+        }
+
+        .copy-btn:hover {
+            opacity: 1;
+            color: var(--accent);
+        }
+
+        .addr-wrapper {
+            display: inline-flex;
+            align-items: center;
+            font-family: monospace;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 12px;
+                flex-wrap: wrap;
+                height: auto;
+                min-height: 64px;
+                padding-bottom: 10px;
+                gap: 10px;
+            }
+
+            .brand span {
+                display: none;
+            }
+
+            .nav-links {
+                overflow-x: auto;
+                margin: 0;
+                width: 100%;
+                justify-content: start;
+                gap: 15px;
+            }
+
+            .search-bar {
+                max-width: 100%;
+                margin: 0;
+                order: 3;
+                width: 100%;
+            }
+
+            .market-overview {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .split-view {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 0 12px;
+                margin-top: 12px;
+            }
+
+            th:nth-child(n+3),
+            td:nth-child(n+3) {
+                display: none;
+            }
+
+            th.mobile-show,
+            td.mobile-show {
+                display: table-cell !important;
+            }
+        }
     </style>
 </head>
 
@@ -290,13 +399,20 @@
         <div class="nav-links">
             <a href="#/" class="nav-link active" data-link id="nav-home">Home</a>
             <a href="#/blocks" class="nav-link" data-link id="nav-blocks">Blocks</a>
-            <a href="#/transaction" class="nav-link" data-link id="nav-txs">Transactions</a>
+            <a href="#/transaction" class="nav-link" data-link id="nav-txs">TXs</a>
+            <a href="#/rewards" class="nav-link" data-link id="nav-rewards">Rewards</a>
             <a href="#/holder" class="nav-link" data-link id="nav-holders">Holders</a>
             <a href="#/analytics" class="nav-link" data-link id="nav-analytics">Analytics</a>
             <a href="#/validator" class="nav-link" data-link id="nav-validators">Validators</a>
         </div>
         <div class="search-bar">
-            <input type="text" id="globalSearch" class="search-input" placeholder="Search by Block, Hash, Address">
+            <div class="search-input-group">
+                <input type="text" id="globalSearch" class="search-input" placeholder="Search by Block, Hash, Address">
+                <div class="search-btns">
+                    <button id="clearSearch" class="search-btn-icon" title="Clear">✕</button>
+                    <button id="execSearch" class="search-btn-icon" title="Search">🔍</button>
+                </div>
+            </div>
         </div>
         <div class="status-indicator">
             <div id="connStatus" class="badge-pill">
@@ -336,11 +452,18 @@
                 </div>
                 <div class="card" style="padding:0">
                     <div class="section-header">
-                        <div class="section-title">Latest Transactions</div><a class="view-all" href="#/transaction"
+                        <div class="section-title">Recent Activity</div><a class="view-all" href="#/transaction"
                             data-link>View All</a>
                     </div>
                     <div id="txListSummary"></div>
                 </div>
+            </div>
+            <div class="card" style="padding:0; margin-top: 24px;">
+                <div class="section-header">
+                    <div class="section-title">Latest Rewards (Coinbase)</div><a class="view-all" href="#/rewards"
+                        data-link>View All</a>
+                </div>
+                <div id="rewardsListSummary"></div>
             </div>
         </div>
 
@@ -358,6 +481,14 @@
                 <div id="txsPagination" class="pagination-controls"></div>
             </div>
             <div class="card" id="txListFull"></div>
+        </div>
+
+        <div id="section-rewards" class="page-section" style="display:none">
+            <div style="display:flex; justify-content:space-between; align-items:center">
+                <h2>Reward Distributions</h2>
+                <div id="rewardsPagination" class="pagination-controls"></div>
+            </div>
+            <div class="card" id="rewardsListFull"></div>
         </div>
         <div id="section-holders" class="page-section" style="display:none">
             <div style="display:flex; justify-content:space-between; align-items:center">
@@ -408,16 +539,16 @@
 
     <div class="status-bar" id="debugLog">Initializing...</div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // SMART API DETECTION
-        // If local file or localhost -> use direct tunnel
-        // If Vercel -> use /api proxy
-        const API = (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-            ? "http://localhost:5000"
-            : "/api";
+        // SUPABASE CONFIGURATION
+        const SB_URL = "https://qmlcekoypbutzsliqqkm.supabase.co";
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtbGNla295cGJ1dHpzbGlxcWttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNTk5ODAsImV4cCI6MjA4NTgzNTk4MH0.OD8T1wYGiSU2KEQD435lWiU5b38KHQjdSq94_P3Au5c";
 
-        let globalChain = [];
-        let globalValidators = [];
+        // Use a different name to avoid collision with the 'supabase' library object
+        const sbClient = supabase.createClient(SB_URL, SB_KEY);
+
+        let globalStats = { height: 0, difficulty: "---", supply: 0, holders: 0 };
         let currentPage = 1;
         const PAGE_SIZE = 50;
 
@@ -426,8 +557,34 @@
             if (el) el.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
         }
 
+        function formatDisplay(str, type = 'address') {
+            if (!str) return '---';
+            const short = str.length > 12 ? str.slice(0, 6) + '...' + str.slice(-4) : str;
+            const clickPath = type === 'block' ? `/block/${str}` : (type === 'tx' ? `/tx/${str}` : `/address/${str}`);
+            return `
+                <div class="addr-wrapper">
+                    <span class="addr" onclick="navigateTo('${clickPath}')">${short}</span>
+                    <span class="copy-btn" onclick="copyToClipboard('${str}')" title="Copy Full Content">📋</span>
+                </div>
+            `;
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const el = document.getElementById('debugLog');
+                const old = el.innerText;
+                el.innerText = "COPIED TO CLIPBOARD!";
+                el.style.color = "var(--accent)";
+                setTimeout(() => {
+                    el.innerText = old;
+                    el.style.color = "var(--text-secondary)";
+                }, 2000);
+            });
+        }
+
         const navigateTo = url => {
             location.hash = url;
+            router();
         };
 
         const router = () => {
@@ -443,8 +600,10 @@
             else if (path.startsWith("/tx/")) view = "tx";
 
             switchTab(view);
-            currentPage = 1; // Reset on view change
-            if (globalChain.length > 0) renderDetails(path);
+            if (view !== "block" && view !== "address" && view !== "tx") {
+                currentPage = 1;
+            }
+            updateView(view, path);
         };
 
         function switchTab(id) {
@@ -453,250 +612,355 @@
             if (target) target.style.display = 'block';
 
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-
-            let navId = "nav-home";
-            if (id === "blocks") navId = "nav-blocks";
-            if (id === "txs") navId = "nav-txs";
-            if (id === "holders") navId = "nav-holders";
-            if (id === "analytics") navId = "nav-analytics";
-            if (id === "validators") navId = "nav-validators";
-
-            const nav = document.getElementById(navId);
+            const navIdMap = {
+                "home": "nav-home", "blocks": "nav-blocks", "txs": "nav-txs", "rewards": "nav-rewards",
+                "holders": "nav-holders", "analytics": "nav-analytics", "validators": "nav-validators"
+            };
+            const nav = document.getElementById(navIdMap[id] || "nav-home");
             if (nav) nav.classList.add('active');
-
-            if (globalChain.length > 0) render();
         }
 
         const COIN = 100_000_000;
-        // 0x0000FFFF... (from consensus.py)
         const MAX_TARGET = BigInt("0x0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 
         function formatMoney(amount) {
-            const val = amount / COIN;
+            const val = Number(amount) / COIN;
             return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 }) + " $HOME";
         }
 
-        async function fetchChain() {
+        async function fetchStats() {
             try {
-                // log(`Fetching from: ${API}/chain ...`); // Reduce noise
-                const res = await fetch(`${API}/chain`);
-                if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+                const { data, error } = await sbClient.from('stats').select('*').eq('id', 1).single();
+                if (error) throw error;
 
-                const data = await res.json();
-                globalChain = data.chain;
-                globalValidators = data.validators || []; // Track full list
-                render();
+                globalStats = {
+                    height: data.height,
+                    difficulty: data.difficulty,
+                    supply: data.total_supply,
+                    holders: 0 // Will fetch count
+                };
 
-                const path = location.hash.slice(1) || "/";
-                renderDetails(path);
+                const { count } = await sbClient.from('holders').select('*', { count: 'exact', head: true });
+                globalStats.holders = count || 0;
 
-                const st = document.getElementById('connStatus');
-                if (st) {
-                    st.innerText = "OPERATIONAL";
-                    st.style.color = "var(--accent)";
-                }
+                renderStats();
             } catch (e) {
-                console.error(e);
-                const st = document.getElementById('connStatus');
-                if (st) {
-                    st.innerText = "ERROR: " + e.message;
-                    st.style.color = "red";
+                log("Stats error: " + e.message);
+            }
+        }
+
+        function renderStats() {
+            document.getElementById('statHeight').innerText = globalStats.height;
+            let diffStr = "---";
+            if (globalStats.difficulty && globalStats.difficulty !== "---") {
+                const target = BigInt(globalStats.difficulty);
+                diffStr = (MAX_TARGET / target).toLocaleString();
+            }
+            document.getElementById('statDiff').innerText = diffStr;
+            document.getElementById('statSupply').innerText = formatMoney(globalStats.supply);
+            document.getElementById('statHolders').innerText = globalStats.holders;
+        }
+
+        async function updateView(view, path) {
+            log(`Loading ${view}...`);
+            const connStatus = document.getElementById('connStatus');
+            connStatus.innerText = "LOADING...";
+            connStatus.style.color = "orange";
+
+            // Always ensure stats are fresh before rendering dependent views
+            await fetchStats();
+
+            if (view === "home") {
+                await Promise.all([fetchLatestBlocks(), fetchLatestTxs(), fetchLatestRewards()]);
+            } else if (view === "blocks") {
+                await fetchBlocks();
+            } else if (view === "txs") {
+                await fetchTxs();
+            } else if (view === "rewards") {
+                await fetchRewards();
+            } else if (view === "holders") {
+                await fetchHolders();
+            } else if (view === "validators") {
+                await fetchValidators();
+            } else if (view === "block") {
+                await fetchBlockDetail(path.split("/")[2]);
+            } else if (view === "address") {
+                await fetchAddressDetail(path.split("/")[2]);
+            } else if (view === "tx") {
+                await fetchTxDetail(path.split("/")[2]);
+            }
+
+            connStatus.innerText = "OPERATIONAL";
+            connStatus.style.color = "var(--accent)";
+        }
+
+        async function fetchLatestBlocks() {
+            try {
+                const { data } = await sbClient.from('blocks').select('*').order('id', { ascending: false }).limit(7);
+                if (!data || data.length === 0) {
+                    document.getElementById('blocksListSummary').innerHTML = '<div class="card">No blocks found.</div>';
+                    return;
                 }
-            }
+                const html = data.map(b => `
+                    <div class="table-row">
+                        <div class="row-data">
+                            <span class="row-primary" onclick="navigateTo('/block/${b.id}')">#${b.id}</span>
+                            <span class="row-secondary">${timeAgo(new Date(b.timestamp).getTime() / 1000)}</span>
+                        </div>
+                        <div class="row-meta">
+                            <span class="badge-pill">${(b.tx_count || 0) + (b.reward_count || 0)} Txs</span>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('blocksListSummary').innerHTML = html;
+            } catch (e) { log("Latest blocks error: " + e.message); }
         }
 
-        function calculateHolders() {
-            const balances = {};
-            globalChain.forEach(b => {
-                b.transactions.forEach(t => {
-                    balances[t.sender] = (balances[t.sender] || 0) - t.amount;
-                    balances[t.receiver] = (balances[t.receiver] || 0) + t.amount;
-                });
-                b.rewards.forEach(r => {
-                    balances[r.receiver] = (balances[r.receiver] || 0) + r.amount;
-                });
-            });
-            return Object.keys(balances)
-                .map(k => ({ address: k, balance: balances[k] }))
-                .filter(x => x.balance > 0)
-                .sort((a, b) => b.balance - a.balance);
-        }
+        async function fetchLatestTxs() {
+            try {
+                const { data: txs } = await sbClient.from('transactions').select('*').order('id', { ascending: false }).limit(4);
+                const { data: rews } = await sbClient.from('rewards').select('*').order('id', { ascending: false }).limit(4);
 
-        function render() {
-            const holders = calculateHolders();
-            const supply = holders.reduce((a, b) => a + b.balance, 0);
+                const txList = txs || [];
+                const rewList = rews || [];
 
-            // Stats
-            document.getElementById('statHeight').innerText = globalChain.length;
+                const combined = [...txList.map(t => ({ ...t, type: 'TX' })), ...rewList.map(r => ({ ...r, type: 'REW', sender: 'SYSTEM' }))]
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                    .slice(0, 8);
 
-            let difficulty = "---";
-            if (globalChain.length > 0) {
-                const target = BigInt(globalChain[globalChain.length - 1].target);
-                // Difficulty = MAX_TARGET / target
-                const diffVal = MAX_TARGET / target;
-                difficulty = diffVal.toLocaleString();
-            }
-
-            document.getElementById('statDiff').innerText = difficulty;
-            document.getElementById('statSupply').innerText = formatMoney(supply);
-            document.getElementById('statHolders').innerText = holders.length;
-
-            // Lists
-            renderList('blocksListSummary', 7, b => `
-                <div class="table-row">
-                    <div class="row-data">
-                        <span class="row-primary" onclick="navigateTo('/block/${b.index}')">#${b.index}</span>
-                        <span class="row-secondary">${timeAgo(b.timestamp)}</span>
-                    </div>
-                    <div class="row-meta">
-                         <span class="badge-pill">${b.transactions.length + (b.rewards ? b.rewards.length : 0)} Txs</span>
-                    </div>
-                </div>
-            `, [...globalChain].reverse());
-
-            const allTx = [];
-            [...globalChain].reverse().forEach(b => {
-                b.transactions.forEach(t => allTx.push({ ...t, type: 'TX', block: b.index }));
-                b.rewards.forEach(r => allTx.push({ ...r, type: 'REW', block: b.index }));
-            });
-
-            renderList('txListSummary', 8, t => `
-                <div class="table-row">
-                    <div class="row-data">
-                         <span class="row-primary" onclick="navigateTo('/tx/${t.timestamp}')">${t.type}</span>
-                         <span class="row-secondary">${timeAgo(t.timestamp)}</span>
-                    </div>
-                    <div class="row-meta">
-                        <span class="row-primary">${formatMoney(t.amount)}</span>
-                         <div style="font-size:0.8em; color:#666">${t.sender.slice(0, 4)}... -> ${t.receiver.slice(0, 4)}...</div>
-                    </div>
-                </div>
-            `, allTx);
-
-
-            // Full Lists (if visible)
-            renderTable('blocksListFull', ['Block', 'Age', 'Txn', 'Validator', 'Reward'], [...globalChain].reverse(), b => `
-                <td><span class="hash" onclick="navigateTo('/block/${b.index}')">#${b.index}</span></td>
-                <td>${timeAgo(b.timestamp)}</td>
-                <td>${b.transactions.length + (b.rewards ? b.rewards.length : 0)}</td>
-                <td><span class="addr" onclick="navigateTo('/address/${b.validator}')">${b.validator.slice(0, 10)}...</span></td>
-                <td>${formatMoney(b.rewards ? b.rewards.reduce((s, r) => s + r.amount, 0) : 0)}</td>
-            `, 'blocksPagination');
-
-            renderTable('holdersList', ['Rank', 'Address', 'Balance', 'Percentage'], holders.map((h, i) => ({ ...h, rank: i + 1 })), h => `
-                <td>${h.rank}</td>
-                <td><span class="addr" onclick="navigateTo('/address/${h.address}')">${h.address}</span></td>
-                <td>${formatMoney(h.balance)}</td>
-                <td>${(h.balance / supply * 100).toFixed(4)}%</td>
-            `, 'holdersPagination');
-
-            renderTable('txListFull', ['Tx Hash', 'Method', 'Block', 'Age', 'From', 'To', 'Value'], allTx, t => `
-                <td><span class="hash" onclick="navigateTo('/tx/${t.timestamp}')">${t.timestamp}</span></td>
-                <td><span class="badge">${t.type}</span></td>
-                <td><span class="addr" onclick="navigateTo('/block/${t.block}')">#${t.block}</span></td>
-                <td>${timeAgo(t.timestamp)}</td>
-                <td><span class="addr" onclick="navigateTo('/address/${t.sender}')">${t.sender.slice(0, 8)}...</span></td>
-                <td><span class="addr" onclick="navigateTo('/address/${t.receiver}')">${t.receiver.slice(0, 8)}...</span></td>
-                <td>${formatMoney(t.amount)}</td>
-            `, 'txsPagination');
-
-            // Validators (Full list from API + mined counts)
-            const minedCounts = {};
-            globalChain.forEach(b => {
-                minedCounts[b.validator] = (minedCounts[b.validator] || 0) + 1;
-            });
-
-            const validatorList = Array.from(new Set([...globalValidators, ...Object.keys(minedCounts)])).map(addr => ({
-                address: addr,
-                blocks: minedCounts[addr] || 0,
-                status: 'ACTIVE'
-            })).sort((a, b) => b.blocks - a.blocks);
-
-            renderTable('validatorsList', ['Rank', 'Validator', 'Blocks Mined', 'Status'], validatorList.map((v, i) => ({ ...v, rank: i + 1 })), v => `
-                <td>${v.rank}</td>
-                <td><span class="addr" onclick="navigateTo('/address/${v.address}')">${v.address}</span></td>
-                <td>${v.blocks}</td>
-                <td><span class="badge" style="background:rgba(0,255,0,0.1); color:#00ff00">${v.status}</span></td>
-            `, 'validatorsPagination');
-        }
-
-        function renderDetails(path) {
-            const holders = calculateHolders();
-
-            if (path.startsWith("/block/")) {
-                const b = globalChain.find(x => x.index == path.split("/")[2]);
-                if (b) {
-                    let html = `<div style="padding:20px">
-                        <p><strong>Hash:</strong> ${b.hash}</p>
-                        <p><strong>Validator:</strong> <a href="#/address/${b.validator}" style="color:var(--accent)">${b.validator}</a></p>
-                        <p><strong>Time:</strong> ${new Date(b.timestamp * 1000).toLocaleString()}</p>
-                        <h4>Transactions</h4><ul>`;
-                    b.transactions.forEach(t => html += `<li><a href="#/address/${t.sender}" style="color:white">${t.sender}</a> -> <a href="#/address/${t.receiver}" style="color:white">${t.receiver}</a>: ${formatMoney(t.amount)}</li>`);
-                    html += `</ul><h4>Reward Distributions</h4><ul>`;
-                    b.rewards.forEach(r => html += `<li>${r.data?.type || 'Reward'} to <a href="#/address/${r.receiver}" style="color:white">${r.receiver}</a>: ${formatMoney(r.amount)}</li>`);
-                    html += `</ul></div>`;
-                    document.getElementById('blockDetailContent').innerHTML = html;
-                    const title = document.getElementById('blockTitle');
-                    if (title) title.innerText = "Block #" + b.index;
-                }
-            }
-            if (path.startsWith("/address/")) {
-                const addr = path.split("/")[2];
-                const bal = holders.find(x => x.address === addr)?.balance || 0;
-                document.getElementById('addressDetailContent').innerHTML = `<div style="padding:20px"><h3>Balance: ${formatMoney(bal)}</h3><p>Address: ${addr}</p></div>`;
-                const title = document.getElementById('addressTitle');
-                if (title) title.innerText = "Address Detail";
-            }
-            if (path.startsWith("/tx/")) {
-                const ts = path.split("/")[2];
-                let found = null;
-                for (let b of globalChain) {
-                    let t = b.transactions.find(x => x.timestamp == ts);
-                    if (!t && b.rewards) t = b.rewards.find(x => x.timestamp == ts);
-                    if (t) { found = t; break; }
+                if (combined.length === 0) {
+                    document.getElementById('txListSummary').innerHTML = '<div class="card">No transactions found.</div>';
+                    return;
                 }
 
-                if (found) {
-                    document.getElementById('txDetailContent').innerHTML = `<div style="padding:20px">
-                        <h3>Amount: ${formatMoney(found.amount)}</h3>
-                        <p>From: <a href="#/address/${found.sender}" style="color:var(--accent)">${found.sender}</a></p>
-                        <p>To: <a href="#/address/${found.receiver}" style="color:var(--accent)">${found.receiver}</a></p>
-                        <p>Type: ${found.data?.type || 'Transfer'}</p>
-                        <p>Data: ${found.data ? JSON.stringify(found.data) : '-'}</p>
-                    </div>`;
-                }
-            }
+                const html = combined.map(t => `
+                    <div class="table-row">
+                        <div class="row-data">
+                            <span class="row-primary" onclick="navigateTo('/tx/${t.signature || t.id}')">${t.type}</span>
+                            <span class="row-secondary">${timeAgo(new Date(t.timestamp).getTime() / 1000)}</span>
+                        </div>
+                        <div class="row-meta">
+                            <span class="row-primary">${formatMoney(t.amount || 0)}</span>
+                            <div style="font-size:0.85em; font-family:monospace; color:var(--text-secondary)">
+                                ${formatDisplay(t.sender)} → ${formatDisplay(t.receiver)}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('txListSummary').innerHTML = html;
+            } catch (e) { log("Latest txs error: " + e.message); }
         }
 
-        function renderList(id, limit, template, data) {
-            const el = document.getElementById(id);
-            if (el) el.innerHTML = data.slice(0, limit).map(template).join('');
-        }
-
-        function renderTable(id, headers, data, rowTemplate, paginationId) {
-            const el = document.getElementById(id);
-            if (!el) return;
-
-            const totalPages = Math.ceil(data.length / PAGE_SIZE);
+        async function fetchBlocks() {
             const start = (currentPage - 1) * PAGE_SIZE;
-            const end = start + PAGE_SIZE;
-            const pagedData = data.slice(start, end);
+            const { data, count } = await sbClient.from('blocks').select('*', { count: 'exact' })
+                .order('id', { ascending: false }).range(start, start + PAGE_SIZE - 1);
 
-            let html = `<table><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>`;
-            html += pagedData.map(d => `<tr>${rowTemplate(d)}</tr>`).join('');
-            html += `</tbody></table>`;
-            el.innerHTML = html;
+            const totalPages = Math.ceil(count / PAGE_SIZE);
+            const headers = ['Block', 'Age', 'Txn', 'Validator', 'Reward Count'];
+            const html = `<table><thead><tr>
+                <th class="mobile-show">Block</th>
+                <th class="mobile-show">Age</th>
+                <th>Txn</th>
+                <th>Validator</th>
+                <th>Reward Count</th>
+            </tr></thead><tbody>` +
+                data.map(b => `<tr>
+                    <td class="mobile-show"><span class="hash" onclick="navigateTo('/block/${b.id}')">#${b.id}</span></td>
+                    <td class="mobile-show">${timeAgo(new Date(b.timestamp).getTime() / 1000)}</td>
+                    <td>${b.tx_count + b.reward_count}</td>
+                    <td>${formatDisplay(b.validator)}</td>
+                    <td>${b.reward_count} distributions</td>
+                </tr>`).join('') + `</tbody></table>`;
 
-            if (paginationId) {
-                renderPagination(paginationId, totalPages);
+            document.getElementById('blocksListFull').innerHTML = html;
+            renderPagination('blocksPagination', totalPages);
+        }
+
+        async function fetchTxs() {
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const { data, count } = await sbClient.from('transactions').select('*', { count: 'exact' })
+                .order('id', { ascending: false }).range(start, start + PAGE_SIZE - 1);
+
+            const totalPages = Math.ceil(count / PAGE_SIZE);
+            const html = `<table><thead><tr>
+                <th class="mobile-show">Hash</th>
+                <th class="mobile-show">Age</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Value</th>
+            </tr></thead><tbody>` +
+                data.map(t => `<tr>
+                    <td class="mobile-show">${formatDisplay(t.signature || t.id.toString(), 'tx')}</td>
+                    <td class="mobile-show">${timeAgo(new Date(t.timestamp).getTime() / 1000)}</td>
+                    <td>${formatDisplay(t.sender)}</td>
+                    <td>${formatDisplay(t.receiver)}</td>
+                    <td>${formatMoney(t.amount)}</td>
+                </tr>`).join('') + `</tbody></table>`;
+
+            document.getElementById('txListFull').innerHTML = html;
+            renderPagination('txsPagination', totalPages);
+        }
+
+        async function fetchLatestRewards() {
+            try {
+                const { data, error } = await sbClient.from('rewards').select('*').order('timestamp', { ascending: false }).limit(6);
+                if (error) throw error;
+                const html = data.map(r => `
+                    <div class="table-row">
+                        <div class="row-data">
+                            <span class="row-primary">${r.type} Distribution</span>
+                            <span class="row-secondary">${timeAgo(new Date(r.timestamp).getTime() / 1000)}</span>
+                        </div>
+                        <div class="row-meta">
+                            <span class="badge-pill">${formatMoney(r.amount)}</span>
+                            <span class="row-secondary">to ${formatDisplay(r.receiver)}</span>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('rewardsListSummary').innerHTML = html;
+            } catch (e) { log("Latest rewards error: " + e.message); }
+        }
+
+        async function fetchRewards() {
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const { data, count, error } = await sbClient.from('rewards').select('*', { count: 'exact' })
+                .order('timestamp', { ascending: false }).range(start, start + PAGE_SIZE - 1);
+
+            if (error) {
+                log("Fetch rewards error: " + error.message);
+                return;
+            }
+
+            const totalPages = Math.ceil(count / PAGE_SIZE);
+            const html = `<table><thead><tr>
+                <th class="mobile-show">Block</th>
+                <th class="mobile-show">Age</th>
+                <th>Recipient</th>
+                <th>Type</th>
+                <th>Value</th>
+            </tr></thead><tbody>` +
+                data.map(r => `<tr>
+                    <td class="mobile-show"><span class="hash" onclick="navigateTo('/block/${r.block_id}')">#${r.block_id}</span></td>
+                    <td class="mobile-show">${timeAgo(new Date(r.timestamp).getTime() / 1000)}</td>
+                    <td>${formatDisplay(r.receiver)}</td>
+                    <td><span class="badge">${r.type}</span></td>
+                    <td>${formatMoney(r.amount)}</td>
+                </tr>`).join('') + `</tbody></table>`;
+
+            if (document.getElementById('rewardsListFull')) {
+                document.getElementById('rewardsListFull').innerHTML = html;
+                renderPagination('rewardsPagination', totalPages);
+            }
+        }
+
+        async function fetchHolders() {
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const { data, count } = await sbClient.from('holders').select('*', { count: 'exact' })
+                .order('balance', { ascending: false }).range(start, start + PAGE_SIZE - 1);
+
+            const totalPages = Math.ceil(count / PAGE_SIZE);
+            const html = `<table><thead><tr>
+                <th class="mobile-show">Rank</th>
+                <th class="mobile-show">Address</th>
+                <th class="mobile-show">Balance</th>
+                <th>Percentage</th>
+            </tr></thead><tbody>` +
+                data.map((h, i) => {
+                    const pct = globalStats.supply > 0 ? ((h.balance / globalStats.supply) * 100).toFixed(4) : "0.0000";
+                    return `<tr>
+                        <td class="mobile-show">${start + i + 1}</td>
+                        <td class="mobile-show">${formatDisplay(h.address)}</td>
+                        <td class="mobile-show">${formatMoney(h.balance)}</td>
+                        <td>${pct}%</td>
+                    </tr>`;
+                }).join('') + `</tbody></table>`;
+
+            document.getElementById('holdersList').innerHTML = html;
+            renderPagination('holdersPagination', totalPages);
+        }
+
+        async function fetchValidators() {
+            const { data } = await sbClient.from('blocks').select('validator').order('id', { ascending: false });
+            const counts = {};
+            data.forEach(x => counts[x.validator] = (counts[x.validator] || 0) + 1);
+            const list = Object.keys(counts).map(addr => ({ address: addr, blocks: counts[addr] })).sort((a, b) => b.blocks - a.blocks);
+
+            const html = `<table><thead><tr>
+                <th class="mobile-show">Rank</th>
+                <th class="mobile-show">Validator</th>
+                <th class="mobile-show">Blocks</th>
+                <th>Status</th>
+            </tr></thead><tbody>` +
+                list.map((v, i) => `<tr>
+                    <td class="mobile-show">${i + 1}</td>
+                    <td class="mobile-show">${formatDisplay(v.address)}</td>
+                    <td class="mobile-show">${v.blocks}</td>
+                    <td><span class="badge" style="background:rgba(0,255,0,0.1); color:#00ff00">ACTIVE</span></td>
+                </tr>`).join('') + `</tbody></table>`;
+
+            document.getElementById('validatorsList').innerHTML = html;
+        }
+
+        async function fetchBlockDetail(id) {
+            const { data: b } = await sbClient.from('blocks').select('*').eq('id', id).single();
+            const { data: txs } = await sbClient.from('transactions').select('*').eq('block_id', id);
+            const { data: rews } = await sbClient.from('rewards').select('*').eq('block_id', id);
+
+            let html = `<div style="padding:20px">
+                <p><strong>Hash:</strong> ${formatDisplay(b.hash, 'tx')}</p>
+                <p><strong>Validator:</strong> ${formatDisplay(b.validator)}</p>
+                <p><strong>Time:</strong> ${new Date(b.timestamp).toLocaleString()}</p>
+                <hr style="border:0; border-top:1px solid var(--border); margin:20px 0">
+                <h4>Transactions (${txs.length})</h4><ul>` +
+                txs.map(t => `<li>${formatDisplay(t.sender)} → ${formatDisplay(t.receiver)}: <b>${formatMoney(t.amount)}</b></li>`).join('') +
+                `</ul><h4 style="margin-top:20px">Rewards (${rews.length})</h4><ul>` +
+                rews.map(r => `<li>${r.type} to ${formatDisplay(r.receiver)}: <b>${formatMoney(r.amount)}</b></li>`).join('') +
+                `</ul></div>`;
+
+            document.getElementById('blockDetailContent').innerHTML = html;
+            document.getElementById('blockTitle').innerText = "Block #" + b.id;
+        }
+
+        async function fetchAddressDetail(addr) {
+            const { data: h } = await sbClient.from('holders').select('balance').eq('address', addr).single();
+            const bal = h ? h.balance : 0;
+            document.getElementById('addressDetailContent').innerHTML = `
+                <div style="padding:20px">
+                    <h3>Balance: ${formatMoney(bal)}</h3>
+                    <div style="display:flex; align-items:center; gap:10px; margin-top:10px">
+                        <span>Address:</span> ${formatDisplay(addr)}
+                    </div>
+                </div>`;
+            document.getElementById('addressTitle').innerText = "Address Info";
+        }
+
+        async function fetchTxDetail(id) {
+            let { data: tx } = await sbClient.from('transactions').select('*').or(`signature.eq.${id},id.eq.${id}`).maybeSingle();
+            if (!tx) {
+                const { data: rew } = await sbClient.from('rewards').select('*').eq('id', id).maybeSingle();
+                tx = rew ? { ...rew, sender: 'SYSTEM', type: rew.type } : null;
+            }
+
+            if (tx) {
+                document.getElementById('txDetailContent').innerHTML = `
+                <div style="padding:20px">
+                    <h3>Amount: ${formatMoney(tx.amount)}</h3>
+                    <p><strong>Hash:</strong> ${formatDisplay(tx.signature || tx.id.toString(), 'tx')}</p>
+                    <p><strong>From:</strong> ${formatDisplay(tx.sender || 'SYSTEM')}</p>
+                    <p><strong>To:</strong> ${formatDisplay(tx.receiver)}</p>
+                    <p><strong>Type:</strong> ${tx.type || 'Transfer'}</p>
+                    <p><strong>Block:</strong> <span class="hash" onclick="navigateTo('/block/${tx.block_id}')">#${tx.block_id}</span></p>
+                    <p><strong>Time:</strong> ${new Date(tx.timestamp).toLocaleString()}</p>
+                </div>`;
+            } else {
+                document.getElementById('txDetailContent').innerHTML = '<div class="card">Transaction not found.</div>';
             }
         }
 
         function renderPagination(id, total) {
             const el = document.getElementById(id);
-            if (!el) return;
-            if (total <= 1) { el.innerHTML = ''; return; }
-
+            if (!el || total <= 1) { el.innerHTML = ''; return; }
             el.innerHTML = `
                 <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px">
                     <button onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''} class="badge-pill" style="cursor:pointer; border:none; background:var(--bg-card); color:white">PREV</button>
@@ -708,21 +972,68 @@
 
         function changePage(dir) {
             currentPage += dir;
-            render();
+            router();
         }
 
         function timeAgo(ts) {
             const s = Math.floor(Date.now() / 1000 - ts);
             if (s < 60) return s + 's ago';
-            return Math.floor(s / 60) + 'm ago';
+            if (s < 3600) return Math.floor(s / 60) + 'm ago';
+            return Math.floor(s / 3600) + 'h ago';
         }
 
         window.addEventListener('hashchange', router);
-        window.addEventListener('load', router);
-        // document.body.onclick = e => { if (e.target.matches("[data-link]")) { e.preventDefault(); navigateTo(e.target.href); } };
-        document.getElementById('globalSearch').onkeypress = e => { if (e.key === 'Enter') { const q = e.target.value; if (/^\d+$/.test(q)) navigateTo('/block/' + q); else navigateTo('/address/' + q); } };
+        window.addEventListener('load', () => {
+            fetchStats();
+            router();
 
-        router(); fetchChain(); setInterval(fetchChain, 10000);
+            // 4. REALTIME SUBSCRIPTION
+            sbClient.channel('public:stats')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'stats' }, payload => {
+                    log("Realtime: Stats updated!");
+                    globalStats = {
+                        height: payload.new.height,
+                        difficulty: payload.new.difficulty,
+                        supply: payload.new.total_supply,
+                        holders: globalStats.holders // Placeholder
+                    };
+                    renderStats();
+                    if (location.hash === "" || location.hash === "#/") {
+                        fetchLatestBlocks();
+                        fetchLatestTxs();
+                    }
+                })
+                .subscribe();
+        });
+        setInterval(fetchStats, 60000); // Less frequent poll as backup
+
+        const searchInput = document.getElementById('globalSearch');
+        const clearBtn = document.getElementById('clearSearch');
+        const searchBtn = document.getElementById('execSearch');
+
+        const performSearch = () => {
+            const q = searchInput.value.trim();
+            if (!q) return;
+            if (/^\d+$/.test(q)) navigateTo('/block/' + q);
+            else if (q.length > 30) navigateTo('/address/' + q);
+            else log("Search term not specific enough.");
+        };
+
+        searchInput.oninput = e => {
+            clearBtn.style.display = e.target.value ? 'block' : 'none';
+        };
+
+        searchInput.onkeypress = e => {
+            if (e.key === 'Enter') performSearch();
+        };
+
+        clearBtn.onclick = () => {
+            searchInput.value = '';
+            clearBtn.style.display = 'none';
+            searchInput.focus();
+        };
+
+        searchBtn.onclick = performSearch;
     </script>
 </body>
 
