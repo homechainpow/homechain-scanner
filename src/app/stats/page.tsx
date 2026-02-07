@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { FileText, TrendingUp, Database, Activity, Zap } from "lucide-react";
+import { FileText, TrendingUp, Database, Activity, Zap, Users } from "lucide-react";
 
 export default function StatsPage() {
     const [stats, setStats] = useState<any>({ height: 0, total_supply: 0, total_txs: 0, difficulty: '' });
