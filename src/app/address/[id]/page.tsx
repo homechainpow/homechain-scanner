@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { timeAgo, formatHash, formatAmount } from "@/lib/utils";
+import { CopyButton } from "@/components/CopyButton";
 
 export default function AddressDetailPage() {
     const params = useParams();
@@ -86,10 +87,24 @@ export default function AddressDetailPage() {
                 </Link>
                 <div className="space-y-1">
                     <h1 className="text-2xl font-bold flex items-center gap-3">
-                        <Wallet className="w-8 h-8 text-primary" />
-                        Address Details
+                        {address === "SYSTEM" ? (
+                            <>
+                                <Hash className="w-8 h-8 text-primary animate-pulse" />
+                                Protocol System / Genesis
+                            </>
+                        ) : (
+                            <>
+                                <Wallet className="w-8 h-8 text-primary" />
+                                Address Details
+                            </>
+                        )}
                     </h1>
-                    <p className="font-mono text-sm text-slate-500 break-all">{address}</p>
+                    <div className="flex items-center gap-2">
+                        <p className="font-mono text-sm text-slate-500">
+                            {address === "SYSTEM" ? "Blockchain Internal Treasury & Minting" : formatHash(address, 12)}
+                        </p>
+                        {address !== "SYSTEM" && <CopyButton text={address} />}
+                    </div>
                 </div>
             </div>
 

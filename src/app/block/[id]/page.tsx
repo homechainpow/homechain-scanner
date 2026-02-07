@@ -6,6 +6,7 @@ import { Box, ArrowLeft, Clock, Hash, User, Database, Zap, ArrowRight, ShieldChe
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { timeAgo, formatAmount, formatHash } from "@/lib/utils";
+import { CopyButton } from "@/components/CopyButton";
 
 export default function BlockDetailPage() {
     const params = useParams();
@@ -102,6 +103,7 @@ export default function BlockDetailPage() {
                         value={block.validator}
                         mono
                         link={`/address/${block.validator}`}
+                        copyable
                     />
                     <DetailRow label="Difficulty" value={block.difficulty || block.target} mono />
                 </div>
@@ -160,6 +162,55 @@ export default function BlockDetailPage() {
                         )}
                     </div>
                 </section>
+
+                {/* Reward Distribution */}
+                <section className="bg-slate-900/30 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+                    <div className="p-8 border-b border-slate-800 flex items-center justify-between bg-slate-800/20">
+                        <h2 className="text-xl font-bold flex items-center gap-3">
+                            <Zap className="w-6 h-6 text-yellow-400" />
+                            Reward Distribution (PPLNS)
+                        </h2>
+                        <span className="px-3 py-1 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-black rounded-lg">{rewards.length} Recipients</span>
+                    </div>
+                    <div className="divide-y divide-slate-800/50">
+                        {rewards.length > 0 ? rewards.map((reward, idx) => (
+                            <div key={idx} className="p-6 hover:bg-slate-800/30 transition-all group">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-left">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <p className="text-xs font-black text-slate-500 uppercase tracking-tighter">Recipient:</p>
+                                                <Link href={`/address/${reward.receiver}`} className="font-mono text-xs text-slate-300 group-hover:text-primary transition-colors">
+                                                    {reward.receiver.substring(0, 12)}...{reward.receiver.substring(reward.receiver.length - 8)}
+                                                </Link>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-xs font-black text-slate-500 uppercase tracking-tighter">Type:</p>
+                                                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${reward.type === 'reward_winner'
+                                                    ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                                                    : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                                    }`}>
+                                                    {reward.type === 'reward_winner' ? 'Block Finder' : 'Community Pool'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-6">
+                                        <div className="text-right">
+                                            <p className="text-2xl font-black text-emerald-400 tabular-nums">+{formatAmount(reward.amount)}</p>
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">$HOME</p>
+                                        </div>
+                                        <Zap className="w-5 h-5 text-yellow-500/50 group-hover:text-yellow-400 transition-all" />
+                                    </div>
+                                </div>
+                            </div>
+                        )) : (
+                            <div className="p-16 text-center text-slate-600 font-bold italic">
+                                No rewards distributed in this block.
+                            </div>
+                        )}
+                    </div>
+                </section>
             </div>
         </div>
     );
@@ -171,13 +222,19 @@ function DetailRow({ label, value, mono = false, link = "", copyable = false }: 
             <dt className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{label}</dt>
             <dd className="flex items-center gap-2">
                 {link ? (
-                    <Link href={link} className={`text-sm font-bold text-primary hover:underline ${mono ? 'font-mono' : ''}`}>
-                        {value}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link href={link} className={`text-sm font-bold text-primary hover:underline ${mono ? 'font-mono' : ''}`}>
+                            {mono ? formatHash(value) : value}
+                        </Link>
+                        {copyable && <CopyButton text={value} />}
+                    </div>
                 ) : (
-                    <span className={`text-sm font-bold text-slate-200 ${mono ? 'font-mono break-all' : ''}`}>
-                        {value}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className={`text-sm font-bold text-slate-200 ${mono ? 'font-mono' : ''}`}>
+                            {mono ? formatHash(value) : value}
+                        </span>
+                        {copyable && <CopyButton text={value} />}
+                    </div>
                 )}
             </dd>
         </div>

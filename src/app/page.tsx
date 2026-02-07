@@ -85,7 +85,7 @@ export default function Home() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                 <StatCard
                     icon={<BarChart3 className="w-6 h-6 text-emerald-400" />}
                     label="Market Cap"
@@ -97,6 +97,12 @@ export default function Home() {
                     label="Block Height"
                     value={stats.height.toLocaleString()}
                     sub="Mining Progress"
+                />
+                <StatCard
+                    icon={<Activity className="w-6 h-6 text-cyan-400" />}
+                    label="Circulation Supply"
+                    value={`${formatAmount(stats.total_supply, 8)}`}
+                    sub="$HOME is in play"
                 />
                 <StatCard
                     icon={<Users className="w-6 h-6 text-purple-400" />}

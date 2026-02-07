@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Users, TrendingUp, ChevronLeft } from "lucide-react";
 import Link from "next/link";
-import { timeAgo, formatAmount } from "@/lib/utils";
+import { timeAgo, formatAmount, formatHash } from "@/lib/utils";
+import { CopyButton } from "@/components/CopyButton";
 
 export default function HoldersPage() {
     const [holders, setHolders] = useState<any[]>([]);
@@ -73,9 +74,12 @@ export default function HoldersPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <Link href={`/address/${holder.address}`} className="font-mono text-xs text-primary hover:text-primary-light hover:underline transition-colors block max-w-[200px] md:max-w-md truncate">
-                                                {holder.address}
-                                            </Link>
+                                            <div className="flex items-center gap-2">
+                                                <Link href={`/address/${holder.address}`} className="font-mono text-xs text-primary hover:text-primary-light hover:underline transition-colors block max-w-xs md:max-w-lg truncate">
+                                                    {formatHash(holder.address, 12)}
+                                                </Link>
+                                                <CopyButton text={holder.address} />
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 font-semibold text-emerald-400 tabular-nums">
                                             {formatAmount(holder.balance)} $HOME

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { timeAgo } from "@/lib/utils";
+import { timeAgo, formatHash } from "@/lib/utils";
+import { CopyButton } from "@/components/CopyButton";
 import { Box, Clock, Hash, User, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
@@ -55,8 +56,8 @@ export default function BlocksPage() {
                                 <th className="px-6 py-4 font-medium text-center">Block</th>
                                 <th className="px-6 py-4 font-medium">Hash</th>
                                 <th className="px-6 py-4 font-medium">Validator</th>
-                                <th className="px-6 py-4 font-medium text-center">TXs</th>
-                                <th className="px-6 py-4 font-medium text-center">Rewards</th>
+                                <th className="px-6 py-4 font-medium text-center" title="Number of user transactions in this block">User TXs</th>
+                                <th className="px-6 py-4 font-medium text-center" title="Number of mining reward distributions in this block">Miner Rewards</th>
                                 <th className="px-6 py-4 font-medium">Timestamp</th>
                             </tr>
                         </thead>
@@ -71,18 +72,22 @@ export default function BlocksPage() {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
                                             <Hash className="w-3.5 h-3.5 text-slate-500" />
-                                            <Link href={`/block/${block.id}`} className="text-slate-400 font-mono text-xs truncate max-w-[150px] group-hover:text-primary transition-colors">
-                                                {block.hash}
+                                            <Link href={`/block/${block.id}`} className="text-slate-400 font-mono text-xs truncate group-hover:text-primary transition-colors">
+                                                {formatHash(block.hash)}
                                             </Link>
+                                            <CopyButton text={block.hash} />
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <Link
-                                            href={`/address/${block.validator}`}
-                                            className="font-mono text-xs text-slate-400 hover:text-primary transition-colors"
-                                        >
-                                            {block.validator.substring(0, 16)}...
-                                        </Link>
+                                        <div className="flex items-center gap-2">
+                                            <Link
+                                                href={`/address/${block.validator}`}
+                                                className="font-mono text-xs text-slate-400 hover:text-primary transition-colors"
+                                            >
+                                                {formatHash(block.validator)}
+                                            </Link>
+                                            <CopyButton text={block.validator} />
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         <span className="px-2.5 py-1 bg-slate-800 border border-slate-700 rounded text-xs text-slate-300">

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { ArrowRightLeft, Clock, ChevronLeft, ChevronRight, Hash } from "lucide-react";
 import { timeAgo, formatAmount, formatHash } from "@/lib/utils";
+import { CopyButton } from "@/components/CopyButton";
 import Link from "next/link";
 
 export default function TransactionsPage() {
@@ -75,20 +76,26 @@ export default function TransactionsPage() {
                                         </Link>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <Link
-                                            href={`/address/${tx.sender}`}
-                                            className="font-mono text-xs text-slate-400 group-hover:text-primary transition-colors"
-                                        >
-                                            {formatHash(tx.sender)}
-                                        </Link>
+                                        <div className="flex items-center gap-2">
+                                            <Link
+                                                href={`/address/${tx.sender}`}
+                                                className="font-mono text-xs text-slate-400 group-hover:text-primary transition-colors"
+                                            >
+                                                {formatHash(tx.sender)}
+                                            </Link>
+                                            <CopyButton text={tx.sender} />
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <Link
-                                            href={`/address/${tx.receiver}`}
-                                            className="font-mono text-xs text-slate-400 group-hover:text-primary transition-colors"
-                                        >
-                                            {formatHash(tx.receiver)}
-                                        </Link>
+                                        <div className="flex items-center gap-2">
+                                            <Link
+                                                href={`/address/${tx.receiver}`}
+                                                className="font-mono text-xs text-slate-400 group-hover:text-primary transition-colors"
+                                            >
+                                                {formatHash(tx.receiver)}
+                                            </Link>
+                                            <CopyButton text={tx.receiver} />
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4 text-right font-bold text-emerald-400 tabular-nums">
                                         {formatAmount(tx.amount)} $HOME

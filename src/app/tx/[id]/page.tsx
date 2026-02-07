@@ -6,6 +6,7 @@ import { ArrowLeft, Clock, Hash, CreditCard, ArrowRight, ShieldCheck, Database, 
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { timeAgo, formatAmount, formatHash } from "@/lib/utils";
+import { CopyButton } from "@/components/CopyButton";
 
 export default function TransactionDetailPage() {
     const params = useParams();
@@ -86,18 +87,24 @@ export default function TransactionDetailPage() {
                             <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between p-6 bg-slate-800/20 rounded-2xl border border-slate-700/50">
                                 <div className="space-y-2">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Sender Address</p>
-                                    <Link href={`/address/${tx.sender}`} className="text-sm font-mono font-bold text-primary hover:underline break-all block">
-                                        {tx.sender}
-                                    </Link>
+                                    <div className="flex items-center gap-2">
+                                        <Link href={`/address/${tx.sender}`} className="text-sm font-mono font-bold text-primary hover:underline">
+                                            {formatHash(tx.sender)}
+                                        </Link>
+                                        <CopyButton text={tx.sender} />
+                                    </div>
                                 </div>
                                 <div className="hidden md:block bg-slate-700/50 p-2 rounded-full">
                                     <ArrowRight className="w-5 h-5 text-slate-500" />
                                 </div>
                                 <div className="space-y-2 md:text-right">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 md:justify-end flex">Receiver Address</p>
-                                    <Link href={`/address/${tx.receiver}`} className="text-sm font-mono font-bold text-emerald-400 hover:underline break-all block">
-                                        {tx.receiver}
-                                    </Link>
+                                    <div className="flex items-center justify-end gap-2">
+                                        <Link href={`/address/${tx.receiver}`} className="text-sm font-mono font-bold text-emerald-400 hover:underline">
+                                            {formatHash(tx.receiver)}
+                                        </Link>
+                                        <CopyButton text={tx.receiver} />
+                                    </div>
                                 </div>
                             </div>
 
@@ -129,7 +136,7 @@ export default function TransactionDetailPage() {
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </Link>
                             </div>
-                            <DetailRow label="Block Hash" value={formatHash(block?.hash || '')} mono link={`/block/${tx.block_id}`} />
+                            <DetailRow label="Block Hash" value={block?.hash || ''} mono link={`/block/${tx.block_id}`} copyable />
                             <DetailRow label="Confirmations" value="Finalized" highlight />
                         </div>
                     </section>
@@ -149,19 +156,25 @@ export default function TransactionDetailPage() {
     );
 }
 
-function DetailRow({ label, value, mono = false, link = "", highlight = false }: { label: string; value: string; mono?: boolean; link?: string; highlight?: boolean }) {
+function DetailRow({ label, value, mono = false, link = "", highlight = false, copyable = false }: { label: string; value: string; mono?: boolean; link?: string; highlight?: boolean; copyable?: boolean }) {
     return (
         <div className="space-y-2">
             <dt className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{label}</dt>
             <dd className="flex items-center gap-2">
                 {link ? (
-                    <Link href={link} className={`text-sm font-bold text-primary hover:underline ${mono ? 'font-mono' : ''}`}>
-                        {value}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link href={link} className={`text-sm font-bold text-primary hover:underline ${mono ? 'font-mono' : ''}`}>
+                            {mono ? formatHash(value) : value}
+                        </Link>
+                        {copyable && <CopyButton text={value} />}
+                    </div>
                 ) : (
-                    <span className={`text-sm font-bold ${highlight ? 'text-white' : 'text-slate-300'} ${mono ? 'font-mono break-all font-medium text-xs' : ''}`}>
-                        {value}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className={`text-sm font-bold ${highlight ? 'text-white' : 'text-slate-300'} ${mono ? 'font-mono' : ''}`}>
+                            {mono ? formatHash(value) : value}
+                        </span>
+                        {copyable && <CopyButton text={value} />}
+                    </div>
                 )}
             </dd>
         </div>

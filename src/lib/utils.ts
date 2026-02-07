@@ -21,12 +21,15 @@ export function timeAgo(timestamp: string | number): string {
     return `${years}y ago`;
 }
 
-export function formatHash(hash: string, length: number = 10): string {
+export function formatHash(hash: string, length: number = 8): string {
     if (!hash) return 'N/A';
-    return `${hash.substring(0, length)}...${hash.substring(hash.length - 6)}`;
+    if (hash.length <= length * 2 + 4) return hash;
+    return `${hash.substring(0, length)}...${hash.substring(hash.length - length)}`;
 }
 
 export function formatAmount(amount: number | string, decimals: number = 8): string {
-    const num = Number(amount) / (10 ** decimals);
+    const val = Number(amount);
+    if (isNaN(val) || amount === null || amount === undefined) return '0.00';
+    const num = val / (10 ** decimals);
     return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 }
