@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Activity, Database, Users, Box, Search, ArrowRightLeft, Cpu } from "lucide-react";
 
 export default function Home() {
     const [blocks, setBlocks] = useState<any[]>([]);
@@ -34,89 +33,51 @@ export default function Home() {
         };
 
         fetchData();
-        const interval = setInterval(fetchData, 10000); // 10s refresh
+        const interval = setInterval(fetchData, 10000);
         return () => clearInterval(interval);
     }, []);
 
     return (
-        <main className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto space-y-8 font-sans">
-            {/* Header */}
-            <header className="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div className="flex items-center gap-3">
-                    <div className="bg-primary/20 p-3 rounded-xl border border-primary/30">
-                        <Cpu className="w-8 h-8 text-primary animate-pulse" />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tighter text-white">HomeChain<span className="text-primary italic">Scan</span></h1>
-                        <p className="text-slate-400 text-sm">V2.0.0 Optimized Ecosystem</p>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-4 w-full md:w-auto">
-                    <div className="relative w-full md:w-96">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                        <input
-                            type="text"
-                            placeholder="Search by block # or hash..."
-                            className="w-full bg-slate-900/50 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-primary/50 transition-colors"
-                        />
-                    </div>
-                </div>
+        <div style={{ fontFamily: 'system-ui', background: '#0a0a0f', color: '#e0e0e0', minHeight: '100vh', padding: '20px' }}>
+            <header style={{ maxWidth: '1200px', margin: '0 auto 40px' }}>
+                <h1 style={{ fontSize: '36px', fontWeight: 'bold', color: '#00ffcc', marginBottom: '8px' }}>
+                    HomeChain<span style={{ color: '#fff', fontStyle: 'italic' }}>Scan</span>
+                </h1>
+                <p style={{ color: '#888', fontSize: '14px' }}>V2.0.0 Optimized Ecosystem</p>
             </header>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <StatCard
-                    icon={<Box className="w-5 h-5 text-blue-400" />}
-                    label="Current Height"
-                    value={stats.height.toLocaleString()}
-                    sub="Blocks Processed"
-                />
-                <StatCard
-                    icon={<Database className="w-5 h-5 text-emerald-400" />}
-                    label="Total Supply"
-                    value={`${(Number(stats.total_supply) / 10 ** 8).toLocaleString()} $HOME`}
-                    sub="Circulating Coins"
-                />
-                <StatCard
-                    icon={<Users className="w-5 h-5 text-purple-400" />}
-                    label="Network Status"
-                    value="Online"
-                    sub="PPLNS Enabled"
-                />
+            <div style={{ maxWidth: '1200px', margin: '0 auto 40px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+                <StatCard label="Current Height" value={stats.height.toLocaleString()} sub="Blocks Processed" />
+                <StatCard label="Total Supply" value={`${(Number(stats.total_supply) / 10 ** 8).toLocaleString()} $HOME`} sub="Circulating Coins" />
+                <StatCard label="Network Status" value="Online" sub="PPLNS Enabled" />
             </div>
 
-            {/* Blocks Table */}
-            <section className="bg-slate-900/30 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
-                <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-                    <h2 className="text-xl font-semibold flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-primary" />
-                        Latest Blocks
-                    </h2>
-                    <span className="text-xs text-slate-500 px-2 py-1 bg-slate-800 rounded-full">Real-time Update</span>
+            <div style={{ maxWidth: '1200px', margin: '0 auto', background: '#151520', border: '1px solid #2a2a3a', borderRadius: '12px', overflow: 'hidden' }}>
+                <div style={{ padding: '20px', borderBottom: '1px solid #2a2a3a' }}>
+                    <h2 style={{ fontSize: '20px', fontWeight: '600' }}>Latest Blocks</h2>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-slate-800/20 text-slate-400 text-xs text-left uppercase tracking-wider">
+                <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead style={{ background: '#1a1a24', color: '#888', fontSize: '12px', textTransform: 'uppercase' }}>
                             <tr>
-                                <th className="px-6 py-4 font-medium">Block</th>
-                                <th className="px-6 py-4 font-medium">Hash</th>
-                                <th className="px-6 py-4 font-medium">Validator</th>
-                                <th className="px-6 py-4 font-medium">TXs</th>
-                                <th className="px-6 py-4 font-medium">Timestamp</th>
+                                <th style={{ padding: '16px', textAlign: 'left' }}>Block</th>
+                                <th style={{ padding: '16px', textAlign: 'left' }}>Hash</th>
+                                <th style={{ padding: '16px', textAlign: 'left' }}>Validator</th>
+                                <th style={{ padding: '16px', textAlign: 'left' }}>TXs</th>
+                                <th style={{ padding: '16px', textAlign: 'left' }}>Timestamp</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800/50 text-sm">
+                        <tbody style={{ fontSize: '14px' }}>
                             {blocks.map((block) => (
-                                <tr key={block.id} className="hover:bg-slate-800/30 transition-colors">
-                                    <td className="px-6 py-4 text-primary font-mono font-bold">#{block.id}</td>
-                                    <td className="px-6 py-4 text-slate-400 font-mono truncate max-w-[150px]">{block.hash}</td>
-                                    <td className="px-6 py-4 text-slate-200">{block.validator}</td>
-                                    <td className="px-6 py-4">
-                                        <span className="px-2 py-1 bg-slate-800 rounded text-xs">{block.tx_count} Transactions</span>
+                                <tr key={block.id} style={{ borderTop: '1px solid #2a2a3a' }}>
+                                    <td style={{ padding: '16px', color: '#00ffcc', fontFamily: 'monospace', fontWeight: 'bold' }}>#{block.id}</td>
+                                    <td style={{ padding: '16px', color: '#888', fontFamily: 'monospace', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{block.hash}</td>
+                                    <td style={{ padding: '16px' }}>{block.validator}</td>
+                                    <td style={{ padding: '16px' }}>
+                                        <span style={{ padding: '4px 8px', background: '#1a1a24', borderRadius: '4px', fontSize: '12px' }}>{block.tx_count} Transactions</span>
                                     </td>
-                                    <td className="px-6 py-4 text-slate-500 text-xs">
+                                    <td style={{ padding: '16px', color: '#666', fontSize: '12px' }}>
                                         {new Date(block.timestamp).toLocaleString()}
                                     </td>
                                 </tr>
@@ -125,24 +86,21 @@ export default function Home() {
                     </table>
                 </div>
                 {blocks.length === 0 && !loading && (
-                    <div className="p-12 text-center text-slate-600">
+                    <div style={{ padding: '60px', textAlign: 'center', color: '#666' }}>
                         Waiting for genesis block...
                     </div>
                 )}
-            </section>
-        </main>
+            </div>
+        </div>
     );
 }
 
-function StatCard({ icon, label, value, sub }: any) {
+function StatCard({ label, value, sub }: any) {
     return (
-        <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                {icon}
-            </div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">{label}</p>
-            <h3 className="text-2xl font-bold text-white mb-2">{value}</h3>
-            <p className="text-xs text-slate-400">{sub}</p>
+        <div style={{ background: '#151520', border: '1px solid #2a2a3a', padding: '24px', borderRadius: '12px' }}>
+            <p style={{ fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', color: '#666', marginBottom: '8px' }}>{label}</p>
+            <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}>{value}</h3>
+            <p style={{ fontSize: '12px', color: '#888' }}>{sub}</p>
         </div>
     );
 }

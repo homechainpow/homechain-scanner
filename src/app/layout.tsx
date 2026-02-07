@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import "./globals.css";
 
 export const metadata: Metadata = {
     title: "HomeChainScan | Professional Blockchain Explorer",
@@ -13,7 +12,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className="font-sans antialiased bg-slate-950 text-slate-200">
+            <body style={{ margin: 0, padding: 0 }}>
                 {children}
             </body>
         </html>
