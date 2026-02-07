@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
 import "./globals.css";
-
-const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
     title: "HomeChainScan | Professional Blockchain Explorer",
@@ -16,7 +13,9 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={outfit.className}>{children}</body>
+            <body className="font-sans antialiased bg-slate-950 text-slate-200">
+                {children}
+            </body>
         </html>
     );
 }
