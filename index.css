@@ -1,0 +1,72 @@
+/* Main CSS for HomeChainScan Restoration */
+
+.nav-btn {
+    @apply flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[13px] font-black transition-all border border-transparent tracking-tight;
+}
+
+.nav-btn:hover {
+    @apply bg-slate-800 text-white border-slate-700;
+}
+
+.nav-btn.active {
+    @apply bg-primary text-slate-950 shadow-[0_8px_20px_rgba(0, 255, 163, 0.15)] border-primary/20 scale-105;
+}
+
+.stat-card {
+    @apply bg-slate-900/50 border border-slate-800 p-10 rounded-[42px] relative overflow-hidden transition-all shadow-lg hover:border-primary/30 hover:shadow-primary/5 hover:-translate-y-1;
+}
+
+.stat-icon {
+    @apply absolute -top-4 -right-4 p-8 opacity-5 group-hover:opacity-10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-700 text-6xl;
+}
+
+.stat-label {
+    @apply text-[10px] font-black uppercase tracking-[0.25em] text-slate-600 mb-2 leading-none;
+}
+
+.stat-value {
+    @apply text-3xl font-black text-white group-hover:text-primary transition-colors tracking-tight;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #050508;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #00FFA3;
+}
+
+/* Animations */
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.float-anim {
+    animation: float 6s ease-in-out infinite;
+}
+
+.hero h1 {
+    line-height: 0.95;
+    letter-spacing: -0.05em;
+}
