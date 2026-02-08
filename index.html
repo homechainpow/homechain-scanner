@@ -313,7 +313,7 @@
                 sb.from('blocks').select('*').order('id', { ascending: false }).limit(6),
                 sb.from('transactions').select('*').order('timestamp', { ascending: false }).limit(6),
                 sb.from('stats').select('*').eq('id', 1).single(),
-                sb.from('holders').select('*', { count: 'exact', head: true }).not('address', 'in', ['GENESIS', 'SYSTEM'])
+                sb.from('holders').select('*', { count: 'exact', head: true }).neq('address', 'GENESIS').neq('address', 'SYSTEM')
             ]);
 
             document.getElementById('view-container').innerHTML = `
@@ -618,7 +618,11 @@
                     <div class="glass-card rounded-2xl overflow-hidden shadow-2xl"><table class="w-full text-left">
                         <thead class="bg-slate-800/20 text-slate-400 text-[10px] font-black uppercase"><tr><th class="px-6 py-5">Rank</th><th class="px-6 py-5">Address</th><th class="px-6 py-5">Balance</th><th class="px-6 py-5 px-6">Percentage</th></tr></thead>
                         <tbody class="divide-y divide-slate-800/50 text-sm">
-                            ${holders?.map((h, i) => `<tr class="hover:bg-slate-800/30 transition-colors"><td class="px-6 py-4 font-bold ${i + page * ITEMS_PER_PAGE < 3 ? 'text-yellow-400' : 'text-slate-500'} font-mono">#${i + 1 + page * ITEMS_PER_PAGE}</td><td class="px-6 py-4"><div class="flex items-center gap-2"><a href="#/address/${h.address}" class="font-mono text-xs text-primary">${formatHash(h.address, 12)}</a> ${renderCopy(h.address)}</div></td><td class="px-6 py-4 font-bold text-emerald-400">${formatAmount(h.balance)} $HOME</td><td class="px-6 py-4"><div class="flex items-center gap-2 max-w-[150px]"><div class="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden"><div class="bg-primary h-full transition-all duration-1000" style="width: ${(Number(h.balance) / supply * 100).toFixed(2)}%"></div></div><span class="text-[10px] font-black text-slate-500">${(Number(h.balance) / supply * 100).toFixed(4)}%</span></div></td></tr>`).join('')}
+                            ${holders?.map((h, i) => {
+                const p = (Number(h.balance) / supply * 100);
+                const pFixed = p > 100 ? '100.0000+' : p.toFixed(4);
+                return `<tr class="hover:bg-slate-800/30 transition-colors"><td class="px-6 py-4 font-bold ${i + page * ITEMS_PER_PAGE < 3 ? 'text-yellow-400' : 'text-slate-500'} font-mono">#${i + 1 + page * ITEMS_PER_PAGE}</td><td class="px-6 py-4"><div class="flex items-center gap-2"><a href="#/address/${h.address}" class="font-mono text-xs text-primary">${formatHash(h.address, 12)}</a> ${renderCopy(h.address)}</div></td><td class="px-6 py-4 font-bold text-emerald-400">${formatAmount(h.balance)} $HOME</td><td class="px-6 py-4"><div class="flex items-center gap-2 max-w-[150px]"><div class="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden"><div class="bg-primary h-full transition-all duration-1000" style="width: ${Math.min(p, 100).toFixed(2)}%"></div></div><span class="text-[10px] font-black text-slate-500">${pFixed}%</span></div></td></tr>`
+            }).join('')}
                         </tbody>
                     </table></div>
 
