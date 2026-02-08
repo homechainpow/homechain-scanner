@@ -605,7 +605,7 @@
 
         async function renderHolders() {
             const page = currentPages.holders;
-            const { data: holders, count } = await sb.from('holders').select('*', { count: 'exact' }).not('address', 'in', ['GENESIS', 'SYSTEM']).order('balance', { ascending: false }).range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1);
+            const { data: holders, count } = await sb.from('holders').select('*', { count: 'exact' }).neq('address', 'GENESIS').neq('address', 'SYSTEM').order('balance', { ascending: false }).range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1);
             const { data: s } = await sb.from('stats').select('total_supply').eq('id', 1).single();
             const supply = Number(s?.total_supply || 1);
 
