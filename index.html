@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeChainScan | Professional Blockchain Explorer</title>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00ffcc',
+                        card: '#151520',
+                    },
+                    fontFamily: {
+                        sans: ['Sora', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #00ffcc;
+            --primary-glow: rgba(0, 255, 204, 0.3);
+            --bg-deep: #0b0e11;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: #f1f5f9;
+            font-family: 'Sora', sans-serif;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .glass-card {
+            background: rgba(21, 21, 32, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-link {
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            color: #94a3b8;
+        }
+
+        .nav-link:hover {
+            color: #ffffff;
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        .nav-link.active {
+            background: var(--primary);
+            color: #0f172a !important;
+            font-weight: 800;
+            box-shadow: 0 10px 15px -3px var(--primary-glow);
+        }
+
+        @keyframes status-ping {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            70%,
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        .animate-ping-custom {
+            animation: status-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0b0e11;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="selection:bg-primary/20 selection:text-primary">
+    <div id="app" class="flex flex-col min-h-screen">
+        <!-- Navbar -->
+        <nav class="bg-slate-900/50 border-b border-slate-800 backdrop-blur-md sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex items-center justify-between h-16">
+                    <!-- Logo -->
+                    <a href="#/" class="flex items-center gap-2 group">
+                        <div
+                            class="bg-primary/20 p-2 rounded-lg border border-primary/30 group-hover:border-primary/60 transition-colors">
+                            <i data-lucide="box"
+                                class="w-6 h-6 text-primary group-hover:scale-110 transition-transform"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold tracking-tight text-white m-0">
+                                HomeChain<span class="text-primary italic font-black">Scan</span>
+                            </h1>
+                            <div class="flex items-center gap-1.5 leading-none">
+                                <div class="relative flex h-2 w-2">
+                                    <span
+                                        class="animate-ping-custom absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </div>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest m-0">Mainnet
+                                    Live</p>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- Navigation -->
+                    <div class="hidden md:flex items-center gap-1" id="navbar-links"></div>
+
+                    <!-- Search Box -->
+                    <div class="relative hidden lg:block group">
+                        <i data-lucide="search"
+                            class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors w-4 h-4"></i>
+                        <input type="text" id="main-search" placeholder="Address / Txn / Block..."
+                            class="w-64 xl:w-80 bg-slate-800/50 border border-slate-700 rounded-lg py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all font-medium text-white placeholder:text-slate-600">
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main id="view-container" class="flex-grow"></main>
+
+        <!-- Footer -->
+        <footer class="bg-slate-900/50 border-t border-slate-800 py-12 mt-20">
+            <div class="max-w-7xl mx-auto px-4 text-center">
+                <p class="text-slate-600 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Stable Release v2.12
+                </p>
+                <div class="flex justify-center gap-8 mb-8">
+                    <a href="#" class="text-slate-500 hover:text-white transition-colors"><i data-lucide="twitter"
+                            class="w-5 h-5"></i></a>
+                    <a href="#" class="text-slate-500 hover:text-white transition-colors"><i data-lucide="github"
+                            class="w-5 h-5"></i></a>
+                </div>
+                <p class="text-slate-500 text-sm">HomeChain V2.0.0 | PPLNS Enabled | Powered by <span
+                        class="text-slate-400">Supabase</span></p>
+                <p class="text-slate-700 text-xs mt-4">© 2026 HomeChain Network. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // --- Supabase Config ---
+        const SB_URL = "https://hemzvtzsyybathuprizc.supabase.co";
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlbXp2dHpzeXliYXRodXByaXpjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDQzMzg4NCwiZXhwIjoyMDg2MDA5ODg0fQ.xy8lenQXiE5Nv9AxI977zNhevXfZcvPgxO05XjQf0i8";
+        const sb = supabase.createClient(SB_URL, SB_KEY);
+
+        // --- State ---
+        let currentPages = { blocks: 0, txs: 0, holders: 0 };
+        const ITEMS_PER_PAGE = 50;
+
+        // --- Helpers ---
+        const timeAgo = (ts) => {
+            const now = Date.now();
+            let then = typeof ts === 'number' ? (ts < 1e10 ? ts * 1000 : ts) : new Date(ts).getTime();
+            const sec = Math.floor((now - then) / 1000);
+            if (sec < 60) return `${sec}s ago`;
+            const min = Math.floor(sec / 60);
+            if (min < 60) return `${min}m ago`;
+            const hr = Math.floor(min / 60);
+            if (hr < 24) return `${hr}h ago`;
+            return `${Math.floor(hr / 24)}d ago`;
+        };
+
+        const formatHash = (h, len = 8) => h ? (h.length <= len * 2 + 4 ? h : `${h.substring(0, len)}...${h.substring(h.length - len)}`) : 'N/A';
+        const formatAmount = (amt) => (Number(amt) / 1e8).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+
+        const copyToClipboard = (text) => {
+            navigator.clipboard.writeText(text);
+            const btn = event.currentTarget;
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>';
+            lucide.createIcons();
+            setTimeout(() => { btn.innerHTML = original; lucide.createIcons(); }, 2000);
+        };
+
+        const renderCopy = (text) => `<button onclick="copyToClipboard('${text}')" class="p-1 hover:bg-slate-800 rounded transition-colors inline-flex"><i data-lucide="copy" class="w-3.5 h-3.5 text-slate-500"></i></button>`;
+
+        const renderPagination = (type, currentPage, totalCount) => {
+            const hasPrev = currentPage > 0;
+            const hasNext = (currentPage + 1) * ITEMS_PER_PAGE < totalCount;
+            if (totalCount <= ITEMS_PER_PAGE) return '';
+
+            return `
+                <div class="flex items-center justify-between gap-4 py-4">
+                    <div class="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                        Showing ${currentPage * ITEMS_PER_PAGE + 1}-${Math.min((currentPage + 1) * ITEMS_PER_PAGE, totalCount)} of ${totalCount.toLocaleString()}
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="changePage('${type}', ${currentPage - 1})" ${!hasPrev ? 'disabled' : ''} class="px-4 py-2 bg-slate-800 rounded-lg text-xs font-bold text-white hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-2">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i> Previous
+                        </button>
+                        <button onclick="changePage('${type}', ${currentPage + 1})" ${!hasNext ? 'disabled' : ''} class="px-4 py-2 bg-slate-800 rounded-lg text-xs font-bold text-white hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-2">
+                            Next <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        };
+
+        async function changePage(type, newPage) {
+            currentPages[type] = newPage;
+            if (type === 'blocks') await renderBlocks();
+            else if (type === 'txs') await renderTransactions();
+            else if (type === 'holders') await renderHolders();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        const renderDetailRow = (label, value, isMono = false, link = '', isCopyable = false) => `
+            <div class="flex flex-col space-y-1.5 py-4 border-b border-slate-800/50 last:border-0">
+                <dt class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">${label}</dt>
+                <dd class="flex items-center gap-2">
+                    ${link ? `<a href="${link}" class="text-sm font-bold text-primary hover:underline ${isMono ? 'font-mono' : ''}">${isMono ? formatHash(value) : value}</a>`
+                : `<span class="text-sm font-bold text-slate-200 ${isMono ? 'font-mono' : ''}">${isMono ? formatHash(value) : value}</span>`}
+                    ${isCopyable ? renderCopy(value) : ''}
+                </dd>
+            </div>`;
+
+        // --- Navigation ---
+        const NAV = [
+            { n: 'Dashboard', p: '/', i: 'home' },
+            { n: 'Blocks', p: '/blocks', i: 'box' },
+            { n: 'Transactions', p: '/transactions', i: 'arrow-right-left' },
+            { n: 'Holders', p: '/holders', i: 'users' },
+            { n: 'Stats', p: '/stats', i: 'bar-chart-3' }
+        ];
+
+        function updateNavbar() {
+            const cur = window.location.hash.replace('#', '') || '/';
+            document.getElementById('navbar-links').innerHTML = NAV.map(item => `
+                <a href="#${item.p}" class="nav-link ${cur === item.p || (item.p !== '/' && cur.startsWith(item.p)) ? 'active' : ''}">
+                    <div class="flex items-center gap-2"><i data-lucide="${item.i}" class="w-4 h-4"></i><span>${item.n}</span></div>
+                </a>`).join('');
+            lucide.createIcons();
+        }
+
+        async function router() {
+            const path = window.location.hash.replace('#', '') || '/';
+            const container = document.getElementById('view-container');
+            updateNavbar();
+            container.innerHTML = '<div class="flex justify-center p-20"><div class="animate-spin h-12 w-12 border-t-2 border-primary rounded-full"></div></div>';
+
+            if (path === '/') await renderHome();
+            else if (path === '/blocks') await renderBlocks();
+            else if (path.startsWith('/block/')) await renderBlock(path.split('/')[2]);
+            else if (path === '/transactions') await renderTransactions();
+            else if (path.startsWith('/tx/')) await renderTx(path.split('/')[2]);
+            else if (path === '/holders') await renderHolders();
+            else if (path.startsWith('/address/')) await renderAddress(path.split('/')[2]);
+            else if (path === '/stats') await renderStats();
+            else await renderHome();
+            lucide.createIcons();
+        }
+
+        // --- Views ---
+        async function renderHome() {
+            const [{ data: blocks }, { data: txs }, { data: stats }, { count: holders }] = await Promise.all([
+                sb.from('blocks').select('*').order('id', { ascending: false }).limit(6),
+                sb.from('transactions').select('*').order('timestamp', { ascending: false }).limit(6),
+                sb.from('stats').select('*').eq('id', 1).single(),
+                sb.from('holders').select('*', { count: 'exact', head: true }).not('address', 'in', ['GENESIS', 'SYSTEM'])
+            ]);
+
+            document.getElementById('view-container').innerHTML = `
+                <div class="p-4 md:p-8 max-w-7xl mx-auto space-y-10 fade-in">
+                    <div class="relative p-8 md:p-12 rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 shadow-2xl">
+                        <div class="relative z-10 space-y-4 max-w-2xl">
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest"><i data-lucide="zap" class="w-3 h-3 fill-primary"></i> Mainnet Stable</div>
+                            <h1 class="text-4xl md:text-6xl font-black tracking-tight text-white">The Future of <span class="text-primary italic">HomeMining</span></h1>
+                            <p class="text-slate-400 text-lg md:text-xl font-medium">Tracking <span class="text-white font-bold">${(stats?.height || 0).toLocaleString()}</span> blocks and <span class="text-white font-bold">${(stats?.total_txs || 0).toLocaleString()}</span> transactions.</p>
+                            <div class="flex gap-4 pt-4"><a href="#/blocks" class="px-6 py-3 bg-primary text-slate-950 rounded-xl font-bold">Explore Blocks</a></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                        ${renderStat('Market Cap', `$${((stats?.total_supply || 0) / 1e8 * 0.52).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, '@ $0.52 / $HOME', 'bar-chart-3', 'text-emerald-400')}
+                        ${renderStat('Height', (stats?.height || 0).toLocaleString(), 'Block Progress', 'box', 'text-blue-400')}
+                        ${renderStat('Supply', formatAmount(stats?.total_supply || 0), '$HOME Circulation', 'activity', 'text-cyan-400')}
+                        ${renderStat('Wallets', (holders || 0).toLocaleString(), 'Unique Addresses', 'users', 'text-purple-400')}
+                        ${renderStat('Total TXs', (stats?.total_txs || 0).toLocaleString(), 'Network Utility', 'trending-up', 'text-yellow-400')}
+                    </div>
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        <section class="glass-card rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col">
+                            <div class="p-6 border-b border-slate-800/50 flex justify-between items-center bg-slate-800/20">
+                                <h2 class="text-xl font-bold flex gap-3 items-center"><i data-lucide="box" class="w-6 h-6 text-primary"></i> <span class="tracking-tight">Recent Blocks</span></h2>
+                                <a href="#/blocks" class="text-xs font-black uppercase tracking-widest text-primary hover:opacity-70 transition-opacity">View All →</a>
+                            </div>
+                            <div class="divide-y divide-slate-800/30">
+                                ${blocks?.map(b => `
+                                    <div class="p-5 hover:bg-slate-800/40 transition-all group">
+                                        <div class="flex flex-wrap md:flex-nowrap justify-between items-center gap-4">
+                                            <div class="flex items-center gap-4 min-w-0">
+                                                <div class="bg-slate-800/80 rounded-2xl p-3 border border-slate-700/50 group-hover:border-primary/30 transition-colors hidden sm:block">
+                                                    <i data-lucide="box" class="w-6 h-6 text-slate-400 group-hover:text-primary transition-colors"></i>
+                                                </div>
+                                                <div class="min-w-0">
+                                                    <a href="#/block/${b.id}" class="block font-mono font-black text-white text-lg group-hover:text-primary transition-colors hover:underline">#${b.id}</a>
+                                                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">${timeAgo(b.timestamp)}</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-col items-start md:items-end min-w-0 flex-1 md:flex-none">
+                                                <div class="flex items-center gap-2 max-w-full">
+                                                    <span class="text-[9px] font-black text-slate-600 uppercase hidden sm:block">Validator</span>
+                                                    <a href="#/address/${b.validator}" class="text-sm font-mono font-bold text-slate-300 hover:text-primary transition-colors truncate">${formatHash(b.validator, 10)}</a>
+                                                    ${renderCopy(b.validator)}
+                                                </div>
+                                                <p class="text-xs font-black text-slate-500 uppercase mt-0.5 tracking-widest">${b.tx_count} Transactions</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
+
+                        <section class="glass-card rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col">
+                            <div class="p-6 border-b border-slate-800/50 flex justify-between items-center bg-slate-800/20">
+                                <h2 class="text-xl font-bold flex gap-3 items-center"><i data-lucide="arrow-right-left" class="w-6 h-6 text-blue-400"></i> <span class="tracking-tight">Recent TXs</span></h2>
+                                <a href="#/transactions" class="text-xs font-black uppercase tracking-widest text-blue-400 hover:opacity-70 transition-opacity">View All →</a>
+                            </div>
+                            <div class="divide-y divide-slate-800/30">
+                                ${txs?.map(t => `
+                                    <div class="p-5 hover:bg-slate-800/40 transition-all group">
+                                        <div class="flex flex-wrap md:flex-nowrap justify-between items-center gap-4">
+                                            <div class="flex items-center gap-4 min-w-0 flex-1">
+                                                <div class="bg-slate-800/80 rounded-2xl p-3 border border-slate-700/50 group-hover:border-blue-400/30 transition-colors hidden sm:block">
+                                                    <i data-lucide="arrow-right-left" class="w-6 h-6 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
+                                                </div>
+                                                <div class="min-w-0 w-full">
+                                                    <div class="flex items-center gap-2 mb-0.5">
+                                                        <span class="text-[9px] font-black text-slate-600 uppercase w-8">From</span>
+                                                        <a href="#/address/${t.sender}" class="text-sm font-mono font-bold text-white group-hover:text-blue-400 transition-colors truncate">${formatHash(t.sender, 8)}</a>
+                                                        ${renderCopy(t.sender)}
+                                                    </div>
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-[9px] font-black text-slate-600 uppercase w-8">To</span>
+                                                        <a href="#/address/${t.receiver}" class="text-sm font-mono font-bold text-emerald-400/80 group-hover:text-emerald-400 transition-colors truncate">${formatHash(t.receiver, 8)}</a>
+                                                        ${renderCopy(t.receiver)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="text-right min-w-[100px]">
+                                                <p class="text-xl font-black text-emerald-400 tabular-nums">${formatAmount(t.amount)}</p>
+                                                <p class="text-[9px] text-slate-600 font-black uppercase tracking-widest">$HOME</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
+                    </div>
+                </div>`;
+        }
+
+        function renderStat(l, v, s, i, c) {
+            return `<div class="glass-card p-6 rounded-3xl relative overflow-hidden group hover:border-primary/40 transition-all"><div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-15 transition-all"><i data-lucide="${i}" class="w-12 h-12 ${c}"></i></div><div class="relative z-10"><p class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">${l}</p><h3 class="text-2xl font-black text-white group-hover:text-primary transition-colors">${v}</h3><p class="text-[10px] text-slate-400 font-bold mt-1">${s}</p></div></div>`;
+        }
+
+        async function renderBlocks() {
+            const page = currentPages.blocks;
+            const { data: blocks, count } = await sb.from('blocks').select('*', { count: 'exact' }).order('id', { ascending: false }).range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1);
+
+            document.getElementById('view-container').innerHTML = `
+                <div class="p-4 md:p-8 max-w-7xl mx-auto space-y-6 fade-in">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <h1 class="text-3xl font-bold flex items-center gap-3"><i data-lucide="box" class="w-8 h-8 text-primary"></i> All Blocks</h1>
+                    </div>
+                    
+                    ${renderPagination('blocks', page, count)}
+
+                    <div class="glass-card rounded-2xl overflow-hidden shadow-2xl">
+                        <div class="overflow-x-auto"><table class="w-full text-left">
+                            <thead class="bg-slate-800/20 text-slate-400 text-[10px] uppercase font-black tracking-widest"><tr><th class="px-6 py-5">Block</th><th class="px-6 py-5">Hash</th><th class="px-6 py-5">Validator</th><th class="px-6 py-5 text-center">TXs</th><th class="px-6 py-5">Time</th></tr></thead>
+                            <tbody class="divide-y divide-slate-800/50 text-sm font-medium">
+                                ${blocks?.map(b => `<tr><td class="px-6 py-4"><a href="#/block/${b.id}" class="text-primary font-mono font-bold hover:underline">#${b.id}</a></td><td class="px-6 py-4 text-xs font-mono text-slate-400 flex items-center gap-2"><a href="#/block/${b.id}" class="hover:text-primary transition-colors">${formatHash(b.hash)}</a> ${renderCopy(b.hash)}</td><td class="px-6 py-4"><div class="flex items-center gap-2"><a href="#/address/${b.validator}" class="font-mono text-xs text-slate-400 hover:text-primary">${formatHash(b.validator)}</a> ${renderCopy(b.validator)}</div></td><td class="px-6 py-4 text-center"><a href="#/block/${b.id}" class="px-2 py-1 bg-slate-800 rounded font-black text-xs text-slate-300 hover:bg-slate-700 transition-colors">${b.tx_count}</a></td><td class="px-6 py-4 text-slate-500 text-xs">${timeAgo(b.timestamp)}</td></tr>`).join('')}
+                            </tbody>
+                        </table></div>
+                    </div>
+
+                    ${renderPagination('blocks', page, count)}
+                </div>`;
+            lucide.createIcons();
+        }
+
+        async function renderBlock(id) {
+            const [{ data: b }, { data: txs }, { data: r }] = await Promise.all([
+                sb.from('blocks').select('*').eq('id', id).single(),
+                sb.from('transactions').select('*').eq('block_id', id),
+                sb.from('rewards').select('*').eq('block_id', id)
+            ]);
+
+            document.getElementById('view-container').innerHTML = `
+                <div class="p-4 md:p-8 max-w-5xl mx-auto space-y-8 fade-in">
+                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-800 pb-8">
+                        <div class="flex items-center gap-5">
+                            <div class="bg-primary/20 p-4 rounded-3xl border border-primary/30 shadow-2xl">
+                                <i data-lucide="box" class="w-10 h-10 text-primary"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-4xl font-black text-white">Block <span class="text-primary italic">#${b.id}</span></h1>
+                                <p class="text-slate-500 font-bold flex items-center gap-2 mt-1">
+                                    <i data-lucide="clock" class="w-4 h-4"></i> ${new Date(Number(b.timestamp) < 1e10 ? b.timestamp * 1000 : b.timestamp).toLocaleString()}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800">
+                            <div class="text-right">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-500">Security</p>
+                                <p class="text-lg font-mono font-bold text-emerald-400">${b.difficulty || 'Verified'}</p>
+                            </div>
+                            <i data-lucide="shield-check" class="w-8 h-8 text-emerald-500/50"></i>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="glass-card rounded-3xl p-8 space-y-2 shadow-2xl">
+                            ${renderDetailRow('Hash', b.hash, true, '', true)}
+                            ${renderDetailRow('Validator', b.validator, true, `#/address/${b.validator}`, true)}
+                        </div>
+                        <div class="glass-card rounded-3xl p-8 space-y-2 shadow-2xl">
+                            ${renderDetailRow('Block Metrics', `${b.tx_count} user txns | ${b.reward_count} distributions`)}
+                            ${renderDetailRow('Block Reward', formatAmount(r?.reduce((acc, x) => acc + Number(x.amount), 0) || 0) + ' $HOME')}
+                            ${renderDetailRow('Age', timeAgo(b.timestamp))}
+                        </div>
+                    </div>
+
+                    <!-- Tabs/Sections for Forensics -->
+                    <div class="space-y-10">
+                        <!-- User Transactions Section -->
+                        <section class="glass-card rounded-3xl overflow-hidden shadow-2xl">
+                            <div class="p-6 border-b border-slate-800 bg-emerald-500/5 flex justify-between items-center">
+                                <h2 class="text-xl font-bold flex gap-3 items-center">
+                                    <i data-lucide="arrow-right-left" class="text-emerald-400"></i> User Transactions
+                                    <span class="text-xs bg-emerald-400/20 text-emerald-400 px-2 py-0.5 rounded-full">${txs?.length || 0}</span>
+                                </h2>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-slate-800/20 text-slate-500 text-[10px] uppercase font-black tracking-widest">
+                                        <tr>
+                                            <th class="px-6 py-5">TX ID</th>
+                                            <th class="px-6 py-5">From / To</th>
+                                            <th class="px-6 py-5 text-right">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800/50 text-sm">
+                                        ${txs?.length ? txs.map(t => `
+                                            <tr class="hover:bg-slate-800/30 transition-all group">
+                                                <td class="px-6 py-4">
+                                                    <a href="#/tx/${t.id}" class="text-sm font-bold text-primary hover:underline">#${t.id}</a>
+                                                </td>
+                                                <td class="px-6 py-4 space-y-1">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-[9px] font-black text-slate-600 uppercase w-8">From</span>
+                                                        <a href="#/address/${t.sender}" class="font-mono text-xs text-slate-400 group-hover:text-white transition-colors">${formatHash(t.sender, 10)}</a>
+                                                        ${renderCopy(t.sender)}
+                                                    </div>
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-[9px] font-black text-slate-600 uppercase w-8">To</span>
+                                                        <a href="#/address/${t.receiver}" class="font-mono text-xs text-emerald-500/80 group-hover:text-emerald-400 transition-colors">${formatHash(t.receiver, 10)}</a>
+                                                        ${renderCopy(t.receiver)}
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-right">
+                                                    <div class="flex flex-col items-end">
+                                                        <span class="text-lg font-black text-emerald-400 tabular-nums">+${formatAmount(t.amount)}</span>
+                                                        <span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">$HOME</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        `).join('') : '<tr><td colspan="3" class="p-20 text-center text-slate-600 font-bold italic">No user transactions.</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- Mining Rewards Section -->
+                        <section class="glass-card rounded-3xl overflow-hidden shadow-2xl">
+                            <div class="p-6 border-b border-slate-800 bg-blue-500/5 flex justify-between items-center">
+                                <h2 class="text-xl font-bold flex gap-3 items-center">
+                                    <i data-lucide="zap" class="text-blue-400"></i> Protocol Rewards
+                                    <span class="text-xs bg-blue-400/20 text-blue-400 px-2 py-0.5 rounded-full">${r?.length || 0}</span>
+                                </h2>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-slate-800/20 text-slate-500 text-[10px] uppercase font-black tracking-widest">
+                                        <tr>
+                                            <th class="px-6 py-5">Payout Type</th>
+                                            <th class="px-6 py-5">Recipient Address</th>
+                                            <th class="px-6 py-5 text-right">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800/50 text-sm">
+                                        ${r?.length ? r.map(ri => `
+                                            <tr class="hover:bg-slate-800/20 transition-colors">
+                                                <td class="px-6 py-4">
+                                                    <span class="px-2 py-1 rounded-lg text-[10px] uppercase font-black tracking-widest ${ri.type === 'reward_winner' ? 'text-yellow-400 bg-yellow-400/10' : 'text-blue-400 bg-blue-400/10'}">
+                                                        ${ri.type === 'reward_winner' ? 'Finder' : 'Pool'}
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <a href="#/address/${ri.receiver}" class="font-mono text-xs text-slate-400 hover:text-primary transition-colors">${formatHash(ri.receiver, 12)}</a>
+                                                        ${renderCopy(ri.receiver)}
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-right font-black text-emerald-400 tabular-nums">
+                                                    +${formatAmount(ri.amount)}
+                                                </td>
+                                            </tr>
+                                        `).join('') : '<tr><td colspan="3" class="p-16 text-center text-slate-600 font-bold italic">No reward data available.</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+                </div>`;
+            lucide.createIcons();
+        }
+
+        async function renderTransactions() {
+            const page = currentPages.txs;
+            const { data: txs, count } = await sb.from('transactions').select('*', { count: 'exact' }).order('timestamp', { ascending: false }).range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1);
+
+            document.getElementById('view-container').innerHTML = `
+                <div class="p-4 md:p-8 max-w-7xl mx-auto space-y-6 fade-in">
+                    <h1 class="text-3xl font-bold flex items-center gap-3"><i data-lucide="arrow-right-left" class="w-8 h-8 text-blue-400"></i> Transactions</h1>
+                    
+                    ${renderPagination('txs', page, count)}
+
+                    <div class="glass-card rounded-2xl overflow-hidden shadow-2xl"><div class="overflow-x-auto"><table class="w-full text-left">
+                        <thead class="bg-slate-800/20 text-slate-400 text-[10px] font-black uppercase tracking-widest"><tr><th class="px-6 py-5">TX ID</th><th class="px-6 py-5">From</th><th class="px-6 py-5">To</th><th class="px-6 py-5 text-right">Amount</th><th class="px-6 py-5">Time</th></tr></thead>
+                        <tbody class="divide-y divide-slate-800/50 text-sm font-medium">
+                            ${txs?.map(t => `<tr><td class="px-6 py-4"><a href="#/tx/${t.id}" class="text-primary font-mono font-bold hover:underline">#${t.id}</a></td><td class="px-6 py-4 text-xs font-mono text-slate-400"><div class="flex items-center gap-2"><a href="#/address/${t.sender}" class="hover:text-primary transition-colors">${formatHash(t.sender)}</a> ${renderCopy(t.sender)}</div></td><td class="px-6 py-4 text-xs font-mono text-slate-400"><div class="flex items-center gap-2"><a href="#/address/${t.receiver}" class="hover:text-primary transition-colors">${formatHash(t.receiver)}</a> ${renderCopy(t.receiver)}</div></td><td class="px-6 py-4 text-right font-black text-emerald-400 tabular-nums">${formatAmount(t.amount)}</td><td class="px-6 py-4 text-slate-500 text-xs">${timeAgo(t.timestamp)}</td></tr>`).join('')}
+                        </tbody>
+                    </table></div></div>
+
+                    ${renderPagination('txs', page, count)}
+                </div>`;
+            lucide.createIcons();
+        }
+
+        async function renderTx(id) {
+            const { data: t } = await sb.from('transactions').select('*, blocks(hash)').eq('id', id).single();
+            document.getElementById('view-container').innerHTML = `
+                <div class="p-4 md:p-8 max-w-5xl mx-auto space-y-10 fade-in">
+                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-slate-800 pb-10"><div class="flex items-center gap-6"><div class="bg-emerald-500/10 p-5 rounded-[2.5rem] border border-emerald-500/20 shadow-2xl"><i data-lucide="credit-card" class="w-12 h-12 text-emerald-400"></i></div><div><div class="flex items-center gap-3 mb-2"><h1 class="text-4xl font-black text-white">TX <span class="text-primary italic">#${t.id}</span></h1><span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase rounded-full">Success</span></div><p class="text-slate-500 font-bold flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4"></i> ${new Date(t.timestamp).toLocaleString()}</p></div></div><div class="text-right p-6 glass-card rounded-3xl"><p class="text-[10px] font-black text-slate-500 mb-1 uppercase tracking-widest">Amount</p><p class="text-3xl font-black text-white tabular-nums">${formatAmount(t.amount)} <span class="text-primary text-sm italic font-black">HOME</span></p></div></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8"><div class="lg:col-span-2 glass-card rounded-[2rem] p-8 space-y-8 relative overflow-hidden group"><div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div><div class="flex flex-col md:flex-row gap-6 items-center justify-between p-6 bg-slate-800/20 rounded-2xl"><div><p class="text-[10px] font-black uppercase text-slate-500">From</p><a href="#/address/${t.sender}" class="text-sm font-mono font-bold text-primary">${formatHash(t.sender)}</a>${renderCopy(t.sender)}</div><i data-lucide="arrow-right" class="text-slate-500"></i><div class="text-right"><p class="text-[10px] font-black uppercase text-slate-500">To</p><a href="#/address/${t.receiver}" class="text-sm font-mono font-bold text-emerald-400">${formatHash(t.receiver)}</a>${renderCopy(t.receiver)}</div></div><div class="grid grid-cols-2 gap-8">${renderDetailRow('Fee', formatAmount(t.fee) + ' HOME')}${renderDetailRow('Nonce', t.nonce || '0', true)}</div></div><div class="glass-card rounded-[2rem] p-8 space-y-6 shadow-2xl"><h2 class="text-lg font-black flex items-center gap-3 text-white uppercase"><i data-lucide="box" class="text-primary"></i> Block Data</h2><div class="p-4 bg-slate-800/40 rounded-2xl space-y-1"><p class="text-[10px] font-black text-slate-500">Block ID</p><a href="#/block/${t.block_id}" class="text-xl font-black text-primary hover:underline">#${t.block_id}</a></div>${renderDetailRow('BlockHash', t.blocks?.hash || '', true, `#/block/${t.block_id}`, true)}${renderDetailRow('Status', 'Finalized')}</div></div>
+                </div>`;
+        }
+
+        async function renderHolders() {
+            const page = currentPages.holders;
+            const { data: holders, count } = await sb.from('holders').select('*', { count: 'exact' }).not('address', 'in', ['GENESIS', 'SYSTEM']).order('balance', { ascending: false }).range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1);
+            const { data: s } = await sb.from('stats').select('total_supply').eq('id', 1).single();
+            const supply = Number(s?.total_supply || 1);
+
+            document.getElementById('view-container').innerHTML = `
+                <div class="p-4 md:p-8 max-w-7xl mx-auto space-y-6 fade-in">
+                    <h1 class="text-3xl font-bold flex items-center gap-3"><i data-lucide="users" class="w-8 h-8 text-primary"></i> Top Holders</h1>
+                    
+                    ${renderPagination('holders', page, count)}
+
+                    <div class="glass-card rounded-2xl overflow-hidden shadow-2xl"><table class="w-full text-left">
+                        <thead class="bg-slate-800/20 text-slate-400 text-[10px] font-black uppercase"><tr><th class="px-6 py-5">Rank</th><th class="px-6 py-5">Address</th><th class="px-6 py-5">Balance</th><th class="px-6 py-5 px-6">Percentage</th></tr></thead>
+                        <tbody class="divide-y divide-slate-800/50 text-sm">
+                            ${holders?.map((h, i) => `<tr class="hover:bg-slate-800/30 transition-colors"><td class="px-6 py-4 font-bold ${i + page * ITEMS_PER_PAGE < 3 ? 'text-yellow-400' : 'text-slate-500'} font-mono">#${i + 1 + page * ITEMS_PER_PAGE}</td><td class="px-6 py-4"><div class="flex items-center gap-2"><a href="#/address/${h.address}" class="font-mono text-xs text-primary">${formatHash(h.address, 12)}</a> ${renderCopy(h.address)}</div></td><td class="px-6 py-4 font-bold text-emerald-400">${formatAmount(h.balance)} $HOME</td><td class="px-6 py-4"><div class="flex items-center gap-2 max-w-[150px]"><div class="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden"><div class="bg-primary h-full transition-all duration-1000" style="width: ${(Number(h.balance) / supply * 100).toFixed(2)}%"></div></div><span class="text-[10px] font-black text-slate-500">${(Number(h.balance) / supply * 100).toFixed(4)}%</span></div></td></tr>`).join('')}
+                        </tbody>
+                    </table></div>
+
+                    ${renderPagination('holders', page, count)}
+                </div>`;
+            lucide.createIcons();
+        }
+
+        async function renderAddress(addr) {
+            const [{ data: bal }, { data: txs }, { data: r }] = await Promise.all([
+                sb.from('holders').select('balance').eq('address', addr).single(),
+                sb.from('transactions').select('*').or(`sender.eq.${addr},receiver.eq.${addr}`).order('timestamp', { ascending: false }).limit(50),
+                sb.from('rewards').select('*').eq('receiver', addr).order('timestamp', { ascending: false }).limit(50)
+            ]);
+            document.getElementById('view-container').innerHTML = `
+                <div class="p-4 md:p-8 max-w-7xl mx-auto space-y-6 fade-in">
+                    <div class="flex gap-4">
+                        <div class="space-y-1">
+                            <h1 class="text-2xl font-bold flex items-center gap-3">${addr === 'SYSTEM' ? '<i data-lucide="hash" class="text-primary"></i> SYSTEM Identity' : '<i data-lucide="wallet" class="text-primary"></i> Address Detail'}</h1>
+                            <div class="flex items-center gap-2 font-mono text-sm text-slate-500">${formatHash(addr, 16)}${renderCopy(addr)}</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group"><div class="absolute top-0 right-0 p-4 opacity-5"><i data-lucide="coins" class="w-16 h-16 text-primary"></i></div><p class="text-slate-500 text-xs font-black uppercase">Balance</p><h2 class="text-3xl font-black text-emerald-400 mt-1">${formatAmount(bal?.balance || 0)} <span class="text-xs text-emerald-600 font-bold">$HOME</span></h2></div>
+                        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group"><div class="absolute top-0 right-0 p-4 opacity-5"><i data-lucide="history" class="w-16 h-16 text-blue-400"></i></div><p class="text-slate-500 text-xs font-black uppercase">Activity</p><div class="flex gap-4 mt-1"><div><p class="text-xl font-black text-white">${txs?.length || 0}</p><p class="text-[8px] text-slate-500 uppercase font-black">TXs</p></div><div class="w-px h-8 bg-slate-800"></div><div><p class="text-xl font-black text-white">${r?.length || 0}</p><p class="text-[8px] text-slate-500 uppercase font-black">Rewards</p></div></div></div>
+                        <div class="glass-card p-6 rounded-2xl relative overflow-hidden group"><div class="absolute top-0 right-0 p-4 opacity-5"><i data-lucide="trending-up" class="w-16 h-16 text-purple-400"></i></div><p class="text-slate-500 text-xs font-black uppercase">Stake</p><p class="text-xs text-slate-400 italic mt-2">Active Since: ${txs?.length ? timeAgo(txs[txs.length - 1].timestamp) : 'N/A'}</p></div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex gap-4 border-b border-slate-800"><button onclick="switchA('txs')" id="t-txs" class="pb-4 px-2 text-sm font-bold text-primary border-b-2 border-primary">Transactions</button><button onclick="switchA('r')" id="t-r" class="pb-4 px-2 text-sm font-bold text-slate-500">Rewards</button></div>
+                        <div id="addr-cont" class="glass-card rounded-2xl overflow-hidden">${renderAddrTbl(txs, addr, 'txs')}</div>
+                    </div>
+                </div>`;
+        }
+
+        function renderAddrTbl(data, addr, type) {
+            if (!data?.length) return '<div class="p-16 text-center text-slate-600 font-bold italic">No history found.</div>';
+            return `<div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-slate-800/20 text-slate-500 text-[10px] uppercase font-black"><tr><th class="px-6 py-5">Type</th><th class="px-6 py-5">Block</th><th class="px-6 py-5">Address</th><th class="px-6 py-5">Amount</th><th class="px-6 py-5">Time</th></tr></thead><tbody class="divide-y divide-slate-800/50 text-sm">
+                ${data.map(i => {
+                const isOut = i.sender === addr;
+                const isR = type === 'r';
+                return `<tr><td class="px-6 py-4"><span class="px-2 py-1 rounded-lg text-[10px] uppercase font-black tracking-widest ${isR ? 'text-yellow-400 bg-yellow-400/10' : (isOut ? 'text-rose-400 bg-rose-400/10' : 'text-emerald-400 bg-emerald-400/10')}">${isR ? 'Reward' : (isOut ? 'Out' : 'In')}</span></td><td class="px-6 py-4"><a href="#/block/${i.block_id}" class="font-bold text-primary hover:underline">#${i.block_id}</a></td><td class="px-6 py-4 font-mono text-xs text-slate-500">${isR ? 'Protocol Minting' : `<div class="flex items-center gap-2"><a href="#/address/${isOut ? i.receiver : i.sender}" class="hover:text-primary transition-colors">${formatHash(isOut ? i.receiver : i.sender)}</a> ${renderCopy(isOut ? i.receiver : i.sender)}</div>`}</td><td class="px-6 py-4 font-black ${isOut && !isR ? 'text-slate-400' : 'text-emerald-400'}">${isOut && !isR ? '-' : '+'}${formatAmount(i.amount)}</td><td class="px-6 py-4 text-slate-500 text-[10px] tabular-nums">${timeAgo(i.timestamp)}</td></tr>`;
+            }).join('')}</tbody></table></div>`;
+        }
+
+        async function switchA(t) {
+            const addr = window.location.hash.split('/')[2];
+            const d = t === 'txs' ? await sb.from('transactions').select('*').or(`sender.eq.${addr},receiver.eq.${addr}`).order('timestamp', { ascending: false }).limit(50) : await sb.from('rewards').select('*').eq('receiver', addr).order('timestamp', { ascending: false }).limit(50);
+            const btns = { txs: document.getElementById('t-txs'), r: document.getElementById('t-r') };
+            Object.keys(btns).forEach(k => { btns[k].className = 'pb-4 px-2 text-sm font-bold ' + (k === t ? 'text-primary border-b-2 border-primary' : 'text-slate-500'); });
+            document.getElementById('addr-cont').innerHTML = renderAddrTbl(d.data, addr, t);
+            lucide.createIcons();
+        }
+
+        async function renderStats() {
+            const { data: s } = await sb.from('stats').select('*').eq('id', 1).single();
+            const { data: b } = await sb.from('blocks').select('*').order('id', { ascending: false }).limit(10);
+            document.getElementById('view-container').innerHTML = `
+                <div class="p-4 md:p-8 max-w-7xl mx-auto space-y-10 fade-in">
+                    <h1 class="text-3xl font-bold flex items-center gap-3"><i data-lucide="bar-chart-3" class="w-8 h-8 text-primary"></i> Analytics</h1>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="glass-card rounded-3xl p-8 space-y-6"><h2 class="text-xl font-bold flex gap-3 text-white"><i data-lucide="zap" class="text-yellow-400"></i> Sync Status Monitor</h2><div class="space-y-4"><div class="flex justify-between items-center"><span class="text-slate-500 text-sm font-bold">Network State</span><span class="text-emerald-400 font-bold bg-emerald-400/10 px-3 py-1 rounded-full text-xs">Healthy / Synchronized</span></div><div class="flex justify-between items-center"><span class="text-slate-500 text-sm font-bold">Blockchain Height</span><span class="text-white font-mono font-bold">${(s?.height || 0).toLocaleString()}</span></div><div class="flex justify-between items-center"><span class="text-slate-500 text-sm font-bold">Total Transactions</span><span class="text-white font-mono font-bold">${(s?.total_txs || 0).toLocaleString()}</span></div></div></div>
+                        <div class="glass-card rounded-3xl p-8 space-y-6 bg-slate-950/80"><h2 class="text-xl font-bold flex gap-3 text-white"><i data-lucide="terminal" class="text-primary"></i> Validator Lounge</h2><div class="font-mono text-[10px] space-y-2 text-primary opacity-80 h-40 overflow-hidden">
+                            <p>> Connecting to HomeChain RPC...</p><p>> Node v2.11 stable handshake success.</p><p>> Found active validators: 124</p><p>> Mined block #${s?.height} found by ${formatHash(b[0]?.validator)}</p><p>> Current network difficulty: ${b[0]?.difficulty || 'Stable'}</p><p class="animate-pulse">> Awaiting next block propagation...</p>
+                        </div></div>
+                    </div>
+                </div>`;
+        }
+
+        // --- Init ---
+        window.addEventListener('hashchange', router);
+        window.addEventListener('DOMContentLoaded', () => {
+            router();
+            document.getElementById('main-search').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const q = e.target.value.trim();
+                    if (!q) return;
+                    if (q.length > 20) window.location.hash = `/address/${q}`;
+                    else if (q.match(/^\d+$/)) window.location.hash = `/block/${q}`;
+                    else window.location.hash = `/tx/${q}`;
+                    e.target.value = '';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
